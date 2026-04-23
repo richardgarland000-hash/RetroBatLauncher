@@ -1,0 +1,98 @@
+# Changelog
+
+All notable changes to this project will be documented in this file.
+
+The format is based on Keep a Changelog,
+and this project adheres to Semantic Versioning.
+
+---
+
+## [2.0.0] - 2026-04-22
+
+Major rewrite to fix each verification and accumulate the results in an
+array. Other than if retrobat.exe could not be found, all verifications 
+are completed and the splash screen closes with a results window opening.
+A start button or an exit button is at the bottom of the results window 
+depending on pass/fail of all verifications. 
+
+Expanded information logged each run for diagnostics. 
+
+Moved each verification script to external files to reduce number of lines 
+in launcher.py.
+
+---
+
+## [2.5.0] - 2026-04-23
+
+### Changed
+- Ditched immediate splash exit and message box when RetroBat exe location is
+  not found (step 1 of do_step) in favor of adding to the other checks verified
+  in show_results_window.
+- Changes to show_results_window(), step 1 of do_step(i) and behavior after splash
+  closes. Results window remains open with an exit button per any verification
+  failure or immediately closes and triggers callback to launch Retrobat.
+  Previous start button removed in favor of the autostart.
+
+---
+
+## [2.0.0] - 2026-04-22
+
+Major rewrite to fix each verification and accumulate the results in an
+array. Other than if retrobat.exe could not be found, all verifications 
+are completed and the splash screen closes with a results window opening.
+A start button or an exit button is at the bottom of the results window 
+depending on pass/fail of all verifications. 
+
+Expanded information logged each run for diagnostics. 
+
+Moved each verification script to external files to reduce number of lines 
+in launcher.py.
+
+---
+
+## [1.2.0] - 2026-04-16
+
+### Added
+- Windows and CPU detection and validation
+- Additional functions
+- New steps added in loading_sequence
+
+### Changed
+- Improved startup performance
+- Changes related to additions 
+
+### Fixed
+- Status message and progress display for each step corrected
+
+---
+
+## [1.1.0] - 2026-04-15
+
+### Added
+- Retrobat DirectX and VC++ dependency checks
+- Added download buttons for missing dependencies
+- Show exit button and keep splash open if there are missing dependencies
+- Removed RetroBat auto-launch
+- Additional functions
+- New step added in loading_sequence
+
+### Changed
+- Changes related to additions 
+
+---
+
+## [1.0.1] - 2026-04-15
+
+### Fixed
+- Minor UI bugs
+
+---
+
+## [1.0.0] - 2026-04-15
+
+- Initial release
+- Logging system for troubleshooting
+- Retro style launcher UI for user interaction
+- Progress bar and status message
+- Path detection for launching RetroBat
+- Auto-launch RetroBat if found
