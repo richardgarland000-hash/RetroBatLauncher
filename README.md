@@ -1,11 +1,31 @@
-# RetroBat Launcher
+# RetroBat Launcher v2.5.0
 
 A Windows executable launcher for [RetroBat](https://www.retrobat.org/) with:
 
 - 🎮 **Retro-themed splash screen** with animated scanline and progress bar
 - 🔍 **Automatic path detection** — searches relative directories so it works from any drive or folder
+- 🔍 **Automatic RetroBat requirement validation** — checks for minimum versions of hardware/software
 - 📋 **Debug logging** — timestamped log files saved to a `logs/` folder next to the .exe
-- ⚠️ **Error dialogs** — friendly popup if RetroBat can't be found
+- ⚠️ **Error dialog** — friendly popup if RetroBat can't be found or requirements are not met
+
+Tested with RetroBat-v8.0.1-stable-win64.
+
+**REQUIREMENTS**
+- Windows 10 or newer (64-bit) (Can run on 8.1 but who has that these days)
+- 64-bit CPU
+- Direct3D 11.1 / OpenGL 4.4 / Vulkan 1.2 compatible GPU 
+- Visual C++ 2010/2015-2019 Redistributable Packages
+- Base installation of RetroBat only includes ROMs that are not copyrighted, you must add these yourself
+
+Retrobat runs in a standalone folder natively, but the system must meet minimum requirements. This
+program was created to validate the requirements and run RetroBat automatically from any drive/folder if 
+all validations pass or show a window with pass/fail details for each requirement. This makes a portable
+drive RetroBat installation with the ROMs and console BIOS easily movable between systems and checks
+the requirements.
+
+**PLEASE NOTE** If you plan on running from a portable drive, it is recommended to use an external SSD 
+(preferred) or HDD connected via USB 3.0 or higher for optimal performance, formatted as exFAT to support 
+files larger than 4GB. Newer console ROMs are huge.
 
 ---
 
@@ -13,13 +33,23 @@ A Windows executable launcher for [RetroBat](https://www.retrobat.org/) with:
 
 ```
 retrobat_launcher/
-├── launcher.py          # Main source file
-├── launcher.spec        # PyInstaller build spec
-├── version_info.txt     # Windows executable metadata
-├── build.bat            # One-click build script (Windows)
-├── README.md
-└── assets/
-    └── icon.ico         # (optional) custom window icon
+├── launcher.py                    # Main source file
+├── launcher.spec                  # PyInstaller build spec
+├── version_info.txt               # Windows executable metadata
+├── build.bat                      # One-click build script (Windows)
+├── README.md                      # This document
+├── get_cpu_info.py                # CPU 64-bit architecture validation
+├── get_directx_version.py         # Direct3D version validation
+├── get_gpu_info.py                # Installed GPU(s) information
+├── get_opengl_version.py          # OpenGL driver version validation
+├── get_vcpp_redist_versions.py    # Visual C++ Redistribution versions validation
+├── get_vulkan_version.py          # Vulkan driver version validation
+├── get_windows_info.py            # Windows version and 64-bit architecture validation
+├── assets/
+│   └── icon.ico                   # (optional) custom window icon
+├── build/                         # Scratch folder for builds
+├── dist/                          # Folder where compiled executable is saved
+└── logs/                          # Diagnostic log store each time it runs
 ```
 
 ---
@@ -123,6 +153,7 @@ Logs are written to `logs/launcher_YYYYMMDD_HHMMSS.log` next to the `.exe`. They
 - Launcher directory and environment variables
 - Every path that was checked during detection
 - All output from `retrobat.exe`
+- Results of each system validation
 - Process exit code
 
 ---
