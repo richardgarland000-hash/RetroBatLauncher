@@ -7,7 +7,7 @@ def get_windows_info(logger: logging.Logger):
     
     # 1. Check if we are actually on Windows
     if platform.system() != "Windows":
-        return {"error": f"Detected {platform.system()}, not Windows."}
+        return {"error": f"⚠ Detected {platform.system()}, not Windows."}
 
     # 2. Get OS Version Details
     # platform.win32_ver() returns (release, version, csd, ptype)
@@ -30,13 +30,13 @@ def get_windows_info(logger: logging.Logger):
     info['Python Arch'] = "64-bit" if sys.maxsize > 2**32 else "32-bit"
 
     if (int(release) >= 10):
-        logger.info(f"✓ Pass: Minimum Windows 10 is met.")
+        logger.info(f"  ✓ Pass: Minimum Windows 10 is met.")
     else:
-        logger.error(f"❌ Fail: Minimum Windows 10 is not met. Detected: {release}")
+        logger.error(f"  ✗ Fail: Minimum Windows 10 is not met. Detected: {release}")
     
     if (platform.machine() == "AMD64"):
-        logger.info(f"✓ Pass: 64-bit architecture is met.")
+        logger.info(f"  ✓ Pass: 64-bit architecture is met.")
     else:
-        logger.error(f"❌ Fail: 64-bit architecture is not met. Detected: {platform.machine()}")
+        logger.error(f"  ✗ Fail: 64-bit architecture is not met. Detected: {platform.machine()}")
 
     return info

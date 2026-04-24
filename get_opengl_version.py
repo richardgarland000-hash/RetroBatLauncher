@@ -36,7 +36,7 @@ def validate_opengl(min_major, min_minor, logger: logging.Logger):
     version_str, error = get_opengl_version_glfw()
 
     if error or not version_str:
-        logger.error(f"OpenGL Detection Failed: {error or 'Unknown error'}")
+        logger.error(f"⚠ OpenGL Detection Failed: {error or 'Unknown error'}")
         return False
 
     logger.info(f"Detected OpenGL: {version_str}")
@@ -50,14 +50,14 @@ def validate_opengl(min_major, min_minor, logger: logging.Logger):
         minor = int(parts[1]) if len(parts) > 1 else 0
 
         if major > min_major or (major == min_major and minor >= min_minor):
-            logger.info(f"✓ Pass: {major}.{minor} >= {min_major}.{min_minor}")
+            logger.info(f"  ✓ Pass: {major}.{minor} >= {min_major}.{min_minor}")
             return True
 
-        logger.error(f"❌ Fail: {major}.{minor} < {min_major}.{min_minor}")
+        logger.error(f"  ✗ Fail: {major}.{minor} < {min_major}.{min_minor}")
         return False
 
     except Exception as e:
-        logger.error(f"Version parsing failed: {e}")
+        logger.error(f"⚠ Version parsing failed: {e}")
         return False
 
 

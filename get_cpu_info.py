@@ -12,7 +12,7 @@ def get_cpu_arch(logger: logging.Logger):
     if machine in ['AMD64', 'x86_64']:
         logger.info("✓ Pass: 64-bit CPU architecture detected.")
     else:
-        logger.error(f"❌ Fail: Unsupported CPU architecture detected: {machine}")
+        logger.error(f"  ✗ Fail: Unsupported CPU architecture detected: {machine}")
     
     return {
         "Hardware Arch": machine,

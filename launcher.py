@@ -142,7 +142,7 @@ def find_retrobat(base: Path, logger: logging.Logger) -> Optional[Path] | None:
             break
         current = parent
 
-    logger.warning(f"  ✗ {RETROBAT_EXE_NAME} not found in any candidate locations.")
+    logger.error(f"  ✗ {RETROBAT_EXE_NAME} not found in any candidate locations.")
     return None
 
 # ─────────────────────────────────────────────
@@ -730,16 +730,22 @@ def main():
                     vcredist_status["VC++ 2010"],
                     "Installed" if vcredist_status["VC++ 2010"] else "Missing"
                 )
-                logger.error("✓ Pass: VC++ 2010 installed" if vcredist_status["VC++ 2010"] \
-                             else "❌ Fail: VC++ 2010 missing")
+
+                if vcredist_status["VC++ 2010"]:
+                    logger.info("  ✓ Pass: VC++ 2010 installed")
+                else:
+                    logger.error("  ✗ Fail: VC++ 2010 missing")
 
                 add_result(
                     "VC++ 2015-2022",
                     vcredist_status["VC++ 2015-2022"],
                     "Installed" if vcredist_status["VC++ 2015-2022"] else "Missing"
                 )
-                logger.error("✓ Pass: VC++ 2015-2022 installed" if vcredist_status["VC++ 2015-2022"] \
-                             else "❌ Fail: VC++ 2015-2022 missing")
+
+                if vcredist_status["VC++ 2015-2022"]:
+                    logger.info("  ✓ Pass: VC++ 2015-2022 installed")
+                else:
+                    logger.error("  ✗ Fail: VC++ 2015-2022 missing")
 
             """
             Increment the do_step integer to proceed to the next step with a delay between 

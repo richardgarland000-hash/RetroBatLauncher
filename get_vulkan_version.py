@@ -38,7 +38,7 @@ def get_vulkan_version():
         return (1, 0, 0), None
 
     except Exception as e:
-        return None, f"Failed to communicate with Vulkan library: {str(e)}"
+        return None, f"⚠ Failed to communicate with Vulkan library: {str(e)}"
 
 def validate_requirement(min_major, min_minor, logger: logging.Logger):
     """Prints status and returns True/False based on requirements."""
@@ -53,9 +53,9 @@ def validate_requirement(min_major, min_minor, logger: logging.Logger):
 
     # Logic check: (Major > Required) OR (Major == Required AND Minor >= Required)
     if (major > min_major) or (major == min_major and minor >= min_minor):
-        logger.info(f"✓ Pass: Minimum {min_major}.{min_minor} is met.")
+        logger.info(f"  ✓ Pass: Minimum {min_major}.{min_minor} is met.")
 
         return True
     
-    logger.error(f"❌ Fail: Version {major}.{minor} is below required {min_major}.{min_minor}.")
+    logger.error(f"  ✗ Fail: Version {major}.{minor} is below required {min_major}.{min_minor}.")
     return False

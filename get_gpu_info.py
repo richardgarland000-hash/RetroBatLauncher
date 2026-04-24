@@ -18,4 +18,4 @@ def get_gpu_info():
             result = subprocess.run(["system_profiler", "SPDisplaysDataType"], capture_output=True, text=True)
             return [line.strip() for line in result.stdout.splitlines() if "Chipset Model" in line]
     except Exception:
-        return ["Unknown GPU"]
+        return ["⚠ Unknown GPU"]
