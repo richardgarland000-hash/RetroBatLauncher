@@ -7,6 +7,17 @@ and this project adheres to Semantic Versioning.
 
 ---
 
+## [2.5.1] - 2026-04-24
+
+### Changed
+- Modified launcher.py to make version displayed in splash window either
+  by assigning version in self.version_text or by version in version_info.txt
+  with the benefit of the compiled executable being completely self-contained
+  as opposed to needing both launcher.py and version_info.txt file updated and
+  included in the deployment.
+
+---
+
 ## [2.5.0] - 2026-04-23
 
 ### Changed

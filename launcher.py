@@ -12,6 +12,11 @@ RetroBat requirements (all validated):
 - Direct3D 11.1 / OpenGL 4.4 / Vulkan 1.2 compatible GPU 
 - Visual C++ 2010/2015-2019 Redistributable Packages
 
+Be sure to update self.version_text in SplashScreen.__init__  to display the
+current version of the launcher. You can also implement dynamic reading from
+a file if you want to get fancy, but both executable and valid version_info.txt
+must exists in the same directory.
+
 Build with: pyinstaller & launcher.spec
 
 """
@@ -281,6 +286,10 @@ class SplashScreen:
         # Create variables AFTER root exists
         self.status_var   = tk.StringVar(master=self.root, value="Initialising…")
         self.progress_var = tk.DoubleVar(master=self.root, value=0.0)
+        # self.version_text = None
+        self.version_text = "Version 2.5.1" # Update this as needed, or change value 
+                                            # to "Unknown" and read from version_info.txt
+                                            # file if you want to get fancy
 
         # Center on screen
         sw = self.root.winfo_screenwidth()
@@ -289,12 +298,12 @@ class SplashScreen:
         y = (sh - self.H) // 2
         self.root.geometry(f"{self.W}x{self.H}+{x}+{y}")
 
-        self._build_ui(self.status_var, self.progress_var)
+        self._build_ui(self.status_var, self.progress_var, self.version_text)
         self._animate_scan(0)
 
     # ── UI construction ──────────────────────
 
-    def _build_ui(self, status_var, progress_var):
+    def _build_ui(self, status_var, progress_var, version_text):
         c = tk.Canvas(
             self.root, width=self.W, height=self.H,
             bg=self.BG, highlightthickness=0,
@@ -345,29 +354,30 @@ class SplashScreen:
             fill=self.BAR_FG, outline="",
         )
 
-        # Version / build tag (read from version_info.txt, fallback to "Unknown")
-        version_text = ""
-        pattern = re.compile(r'StringStruct\("([^"]+)",\s*"([^"]+)"\)')
+        # Assign self.version_text is assigned "Unknown" above to use version from 
+        # ProductVersion value in version_info.txt, otherwise fallback to "Unknown"
+        if version_text == "":
+            pattern = re.compile(r'StringStruct\("([^"]+)",\s*"([^"]+)"\)')
 
-        def get_stringstruct_value(file_path, key):
-            remove_chars = '"\' )'
-            table = str.maketrans('', '', remove_chars)
+            def get_stringstruct_value(file_path, key):
+                remove_chars = '"\' )'
+                table = str.maketrans('', '', remove_chars)
 
-            try:
-                with open(file_path, "r", encoding="utf-8", errors="ignore") as f:
-                    for line in f:
-                        match = pattern.search(line)
-                        if match and match.group(1) == key:
-                            return match.group(2).translate(table)
-            except:
-                pass
+                try:
+                    with open(file_path, "r", encoding="utf-8", errors="ignore") as f:
+                        for line in f:
+                            match = pattern.search(line)
+                            if match and match.group(1) == key:
+                                return match.group(2).translate(table)
+                except:
+                    pass
 
-            return "Unknown"
-        
-        if not get_stringstruct_value("version_info.txt", "ProductVersion") == "Unknown":
-            version_text = f"Version {get_stringstruct_value("version_info.txt", "ProductVersion")}"
-        else:
-            version_text = "Unknown"
+                return "Unknown"
+            
+            if not get_stringstruct_value("version_info.txt", "ProductVersion") == "":
+                version_text = f"Version {get_stringstruct_value("version_info.txt", "ProductVersion")}"
+            else:
+                version_text = "Version Unknown"
 
         c.create_text(self.W//2, 240,
                       #text=f"v1.2  ·  {datetime.now():%Y-%m-%d}",
@@ -516,6 +526,10 @@ def main():
     # need to be StringVar / DoubleVar bound to that root.
     status_var   = None
     progress_var = None
+    version_text = None
+
+    # ── Version variable - update this ───────
+    #version_text = "2.5.0"
 
     # ── Create splash ────────────────────────
     # We need the Tk instance first to make StringVar / DoubleVar
@@ -523,13 +537,14 @@ def main():
     splash = None
 
     def run_with_splash():
-        nonlocal splash, status_var, progress_var
+        nonlocal splash, status_var, progress_var, version_text
 
         # Build splash — Tk root is created inside __init__,
         # then StringVar/DoubleVar are created bound to that root.
         splash = SplashScreen(logger=logger)
         status_var   = splash.status_var
         progress_var = splash.progress_var
+        version_text = splash.version_text
 
         # Drive the loading steps on the Tk main thread via after()
         splash.root.after(100, loading_sequence)
@@ -551,7 +566,7 @@ def main():
         """
         Define the sequential loading steps with status updates and progress increments.
         """
-        nonlocal retrobat_exe #, launch_error
+        nonlocal retrobat_exe
 
         steps = [
             (0.05, "Initializing Launcher…"),           # step 0
@@ -570,7 +585,7 @@ def main():
         Function for looping through sequential loading steps.
         """
         def do_step(i):
-            nonlocal retrobat_exe #, launch_error
+            nonlocal retrobat_exe
 
             # If all validation steps are done, close splash screen and 
             # show results window.
