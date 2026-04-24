@@ -7,21 +7,6 @@ and this project adheres to Semantic Versioning.
 
 ---
 
-## [2.0.0] - 2026-04-22
-
-Major rewrite to fix each verification and accumulate the results in an
-array. Other than if retrobat.exe could not be found, all verifications 
-are completed and the splash screen closes with a results window opening.
-A start button or an exit button is at the bottom of the results window 
-depending on pass/fail of all verifications. 
-
-Expanded information logged each run for diagnostics. 
-
-Moved each verification script to external files to reduce number of lines 
-in launcher.py.
-
----
-
 ## [2.5.0] - 2026-04-23
 
 ### Changed
