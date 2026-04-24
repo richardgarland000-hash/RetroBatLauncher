@@ -1,6 +1,6 @@
 ---
 name: Custom issue/feature template
-about: Describe this issue template's purpose here.
+about: Describe your issue or feature request.
 title: "[ISSUES/FEATURE REQUEST]"
 labels: ''
 assignees: ''
