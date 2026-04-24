@@ -142,7 +142,7 @@ def find_retrobat(base: Path, logger: logging.Logger) -> Optional[Path] | None:
             break
         current = parent
 
-    logger.error(f"  ✗ {RETROBAT_EXE_NAME} not found in any candidate locations.")
+    logger.error(f"  ✗ Fail: {RETROBAT_EXE_NAME} not found in any candidate locations.")
     return None
 
 # ─────────────────────────────────────────────
