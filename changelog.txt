@@ -7,6 +7,14 @@ and this project adheres to Semantic Versioning.
 
 ---
 
+## [2.5.2] - 2026-04-24
+
+### Changed
+- Added download link buttons for version failure message of DirectX, 
+  Visual C++ 2010 and Visual C++ 2015-2022 in results window. 
+
+---
+
 ## [2.5.1] - 2026-04-24
 
 ### Changed

@@ -31,6 +31,7 @@ import subprocess
 import logging
 import tkinter as tk
 import re
+import webbrowser
 
 from tkinter import messagebox
 from pathlib import Path
@@ -142,7 +143,7 @@ def find_retrobat(base: Path, logger: logging.Logger) -> Optional[Path] | None:
             break
         current = parent
 
-    logger.error(f"  ✗ Fail: {RETROBAT_EXE_NAME} not found in any candidate locations.")
+    logger.error(f"  ✗ Fail: {RETROBAT_EXE_NAME} not found in any candidate locations! Please check the log for details.")
     return None
 
 # ─────────────────────────────────────────────
@@ -196,8 +197,8 @@ def show_results_window(results, launch_callback=None):
                     row,
                     text="Fix",
                     command=r["fix"],
-                    bg="#ff6b35",
-                    fg="white"
+                    bg="#ff6b35"#,
+                    #fg="white"
                 )
                 btn.pack(side="right")
 
@@ -243,13 +244,6 @@ def collect_environment_info(logger: logging.Logger) -> dict:
         else:
             logger.info(f"  {k}: {v}")
     return info
-
-# ─────────────────────────────────────────────
-#  Download links, unused for now.
-# ─────────────────────────────────────────────
-
-#DX_LINK = "https://www.microsoft.com/en-us/download/details.aspx?id=35"
-#VC_LINK = "https://learn.microsoft.com/en-us/cpp/windows/latest-supported-vc-redist"
 
 # ─────────────────────────────────────────────
 #  Splash screen parameters and functions.
@@ -460,6 +454,19 @@ class SplashScreen:
             self.root = None
 
 # ─────────────────────────────────────────────
+#  Download link URLs for missing dependencies.
+# ─────────────────────────────────────────────
+
+# Direct link for Visual C++ 2010 SP1 (x64)
+VC_2010_LINK = "https://www.microsoft.com/en-us/download/details.aspx?id=26999"
+    
+# Permanent link for the latest Visual C++ 2015-2022 (x64)
+VC_2015_2022_LINK = "https://aka.ms/vc14/vc_redist.x64.exe"
+
+# DirectX End-User Runtime Web Installer
+DX_LINK = "https://www.microsoft.com/en-us/download/details.aspx?id=35"
+
+# ─────────────────────────────────────────────
 #  Launch logic
 # ─────────────────────────────────────────────
 
@@ -528,9 +535,6 @@ def main():
     progress_var = None
     version_text = None
 
-    # ── Version variable - update this ───────
-    #version_text = "2.5.0"
-
     # ── Create splash ────────────────────────
     # We need the Tk instance first to make StringVar / DoubleVar
     # Trick: create them after SplashScreen.__init__ builds root.
@@ -552,14 +556,15 @@ def main():
 
     # Initialize validation variables
     retrobat_exe = None
-    #launch_error = None
+    link = None
     results = []
 
-    def add_result(name, passed, message):
+    def add_result(name, passed, message, fix=None):
         results.append({
             "name": name,
             "passed": passed,
-            "message": message
+            "message": message,
+            "fix": fix
         })
 
     def loading_sequence():
@@ -585,7 +590,7 @@ def main():
         Function for looping through sequential loading steps.
         """
         def do_step(i):
-            nonlocal retrobat_exe
+            nonlocal retrobat_exe, link
 
             # If all validation steps are done, close splash screen and 
             # show results window.
@@ -610,7 +615,8 @@ def main():
                 add_result(
                     "RetroBat Executable",
                     exe_ok,
-                    f"Found {retrobat_exe}" if retrobat_exe else f"{RETROBAT_EXE_NAME} missing"
+                    f"Found {retrobat_exe}" if retrobat_exe else f"{RETROBAT_EXE_NAME} missing",
+                    fix=None  # No 'Fix' button will appear for this failure
                 )
                 
             # Step 2: Check CPU architecture (64-bit required).
@@ -624,7 +630,8 @@ def main():
                 add_result(
                     "CPU Architecture",
                     cpu_is_64bit,
-                    "64-bit CPU detected" if cpu_is_64bit else "64-bit CPU REQUIRED"
+                    "64-bit CPU detected" if cpu_is_64bit else "64-bit CPU REQUIRED",
+                    fix=None  # No 'Fix' button will appear for this failure
                 )
 
             # Step 3: Check GPU info for troubleshooting and logging.
@@ -653,7 +660,8 @@ def main():
                 add_result(
                     "Windows Version",
                     win_ok,
-                    "Compatible Windows version 10+ detected" if win_ok else "Incompatible Windows version"
+                    "Compatible Windows version 10+ detected" if win_ok else "Incompatible Windows version",
+                    fix=None  # No 'Fix' button will appear for this failure
                 )
 
             # Step 5: Check DirectX for minimum version.
@@ -666,7 +674,9 @@ def main():
                 add_result(
                     "DirectX Version",
                     dx_ok,
-                    "Compatible DirectX version 11.1 detected" if dx_ok else "Incompatible DirectX version"
+                    "Compatible DirectX version 11.1 detected" if dx_ok else "DirectX 11.1 REQUIRED",
+                    #fix=lambda: webbrowser.open(DX_LINK) if not dx_ok else None
+                    fix=lambda link=DX_LINK: webbrowser.open(link)
                 )
             
             # Step 6: Check OpenGL for minimum version.
@@ -677,7 +687,8 @@ def main():
                 add_result(
                     "OpenGL Version",
                     gl_ok,
-                    "Compatible OpenGL version 4.4 detected" if gl_ok else "Incompatible OpenGL version"
+                    "Compatible OpenGL version 4.4 detected" if gl_ok else "OpenGL 4.4 REQUIRED",
+                    fix=None  # No 'Fix' button will appear for this failure
                 )
 
             # Step 7: Check Vulkan for minimum version.
@@ -688,7 +699,8 @@ def main():
                 add_result(
                     "Vulkan",
                     vk_ok,
-                    "Vulkan 1.2 detected" if vk_ok else "Vulkan 1.2 REQUIRED"
+                    "Compatible Vulkan version 1.2 detected" if vk_ok else "Vulkan 1.2 REQUIRED",
+                    fix=None  # No 'Fix' button will appear for this failure
                 )
 
             # Step 8: Check Visual C++ Redistributable for 2010/2015-2019 installations.
@@ -728,7 +740,9 @@ def main():
                 add_result(
                     "VC++ 2010",
                     vcredist_status["VC++ 2010"],
-                    "Installed" if vcredist_status["VC++ 2010"] else "Missing"
+                    "Installed" if vcredist_status["VC++ 2010"] else "Missing",
+                    #fix=lambda: webbrowser.open(VC_2010_LINK) if not vcredist_status["VC++ 2015-2022"] else None
+                    fix=lambda link=VC_2010_LINK: webbrowser.open(link)
                 )
 
                 if vcredist_status["VC++ 2010"]:
@@ -739,7 +753,9 @@ def main():
                 add_result(
                     "VC++ 2015-2022",
                     vcredist_status["VC++ 2015-2022"],
-                    "Installed" if vcredist_status["VC++ 2015-2022"] else "Missing"
+                    "Installed" if vcredist_status["VC++ 2015-2022"] else "Missing",
+                    #fix=lambda: webbrowser.open(VC_2015_2022_LINK) if not vcredist_status["VC++ 2015-2022"] else None
+                    fix=lambda link=VC_2015_2022_LINK: webbrowser.open(link)
                 )
 
                 if vcredist_status["VC++ 2015-2022"]:
