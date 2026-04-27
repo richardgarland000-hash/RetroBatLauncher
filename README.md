@@ -32,23 +32,35 @@ files larger than 4GB. Newer console ROMs are huge.
 ## Project Structure
 
 retrobat_launcher/
-├── launcher.py                    # Main source file
-├── launcher.spec                  # PyInstaller build spec
-├── version_info.txt               # Windows executable metadata
-├── build.bat                      # One-click build script (Windows)
-├── README.md                      # This document
-├── get_cpu_info.py                # CPU 64-bit architecture validation
-├── get_directx_version.py         # Direct3D version validation
-├── get_gpu_info.py                # Installed GPU(s) information
-├── get_opengl_version.py          # OpenGL driver version validation
-├── get_vcpp_redist_versions.py    # Visual C++ Redistribution versions validation
-├── get_vulkan_version.py          # Vulkan driver version validation
-├── get_windows_info.py            # Windows version and 64-bit architecture validation
-├── assets/
-│   └── icon.ico                   # (optional) custom window icon
-├── build/                         # Scratch folder for builds
-├── dist/                          # Folder where compiled executable is saved
-└── logs/                          # Diagnostic log store each time it runs
+```
+├── 📁 assets
+│   ├── 📄 icon.ico
+│   └── 🖼️ icon.png
+├── ⚙️ .gitignore
+├── 📝 CODE_OF_CONDUCT.md
+├── 📝 CONTRIBUTING.md
+├── 📄 LICENSE
+├── 📝 README.md
+├── 📝 SECURITY.md
+├── 📄 build.bat
+├── 📄 changelog.txt
+├── 🐍 get_cpu_info.py
+├── 🐍 get_directx_version.py
+├── 🐍 get_gpu_info.py
+├── 🐍 get_opengl_version.py
+├── 🐍 get_vcpp_redist_versions.py
+├── 🐍 get_vulkan_version.py
+├── 🐍 get_windows_info.py
+├── 🐍 launcher.py
+├── 📄 launcher.spec
+└── 📄 version_info.txt
+
+**Other folders created when building or running**
+
+├── 📁 build                         # Scratch folder for builds
+├── 📁 dist                          # Folder where compiled executable is saved
+└── 📁 logs                          # Diagnostic log store each time it runs
+```
 
 ---
 
