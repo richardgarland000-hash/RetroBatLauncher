@@ -147,8 +147,7 @@ def find_retrobat(base: Path, logger: logging.Logger) -> Optional[Path] | None:
     return None
 
 # ─────────────────────────────────────────────
-#  Results window with summary of checks and 
-#  "Start" button if all passed, or "Exit" if not.
+#  Results window with summary of checks.
 # ─────────────────────────────────────────────
 
 def show_results_window(results, launch_callback=None):
@@ -192,6 +191,10 @@ def show_results_window(results, launch_callback=None):
             )
             label.pack(side="left", fill="x", expand=True)
 
+            # Display "Fix" button if validation failed and the fix 
+            # variable is set (a function that opens the relevant URL)
+            # See do_step() in loading_sequence() for where add_result() 
+            # is called with fix functions.
             if not r["passed"] and r.get("fix"):
                 btn = tk.Button(
                     row,
@@ -206,6 +209,10 @@ def show_results_window(results, launch_callback=None):
         bottom = tk.Frame(root, pady=10)
         bottom.pack()
 
+        # If no issues, just launch RetroBat and close the results 
+        # window; otherwise display "Exit" button, which only closes 
+        # the results window, so the user can see the results list 
+        # and relevant fix buttons (download links).
         if all_passed and launch_callback:
             launch_callback()
             root.destroy()
@@ -348,7 +355,7 @@ class SplashScreen:
             fill=self.BAR_FG, outline="",
         )
 
-        # Assign self.version_text is assigned "Unknown" above to use version from 
+        # If self.version_text has no assigned value above, use version from 
         # ProductVersion value in version_info.txt, otherwise fallback to "Unknown"
         if version_text == "":
             pattern = re.compile(r'StringStruct\("([^"]+)",\s*"([^"]+)"\)')
@@ -467,7 +474,7 @@ VC_2015_2022_LINK = "https://aka.ms/vc14/vc_redist.x64.exe"
 DX_LINK = "https://www.microsoft.com/en-us/download/details.aspx?id=35"
 
 # ─────────────────────────────────────────────
-#  Launch logic
+#  RetroBat launch logic
 # ─────────────────────────────────────────────
 
 def launch_retrobat(exe: Path, logger: logging.Logger) -> int:
@@ -485,7 +492,7 @@ def launch_retrobat(exe: Path, logger: logging.Logger) -> int:
     # Copy current environment and modify for EmulationStation folder.
     env = os.environ.copy()
 
-    # Set related environment variables to the emulationstation folder
+    # Set related environment variables to the EmulationStation folder
     # inside the RetroBat installation.
     env["HOME"]         = str(es_home)
     env["USERPROFILE"]  = str(es_home)
@@ -525,7 +532,6 @@ def main():
     # ── Bootstrap paths & logging ────────────
     launcher_dir = get_launcher_dir()
     log_dir = launcher_dir / "logs"
-    #log_dir = Path(os.environ.get("LOCALAPPDATA", launcher_dir)) / "RetroBatLauncher" / "logs"
     logger = setup_logging(log_dir)
 
     # ── Shared tkinter variables ─────────────
@@ -559,6 +565,8 @@ def main():
     link = None
     results = []
 
+    # Adds the results of each validation step to the results array, which will be 
+    # evaluated and displayed in the results window after the splash screen closes.
     def add_result(name, passed, message, fix=None):
         results.append({
             "name": name,
@@ -587,7 +595,7 @@ def main():
         ]
 
         """
-        Function for looping through sequential loading steps.
+        Function for looping through sequential validation steps.
         """
         def do_step(i):
             nonlocal retrobat_exe, link
@@ -668,14 +676,13 @@ def main():
             elif i == 5:
                 # Check for Direct3D 11.1 feature level (fallback to dxdiag version string if feature 
                 # level check fails)
-                min_feature_level = 11 #"0xb000"
+                min_feature_level = 11 # "0xb000"
                 dx_ok = validate_directx(min_feature_level, logger) # returns boolean
 
                 add_result(
                     "DirectX Version",
                     dx_ok,
                     "Compatible DirectX version 11.1 detected" if dx_ok else "DirectX 11.1 REQUIRED",
-                    #fix=lambda: webbrowser.open(DX_LINK) if not dx_ok else None
                     fix=lambda link=DX_LINK: webbrowser.open(link)
                 )
             
@@ -726,7 +733,6 @@ def main():
                             if "2010" in name:
                                 required["VC++ 2010"] = True
 
-                            #if any(v in name for v in ["2015", "2017", "2019", "2022"]):
                             if "2015-2022" in name:
                                 required["VC++ 2015-2022"] = True
 
@@ -741,7 +747,6 @@ def main():
                     "VC++ 2010",
                     vcredist_status["VC++ 2010"],
                     "Installed" if vcredist_status["VC++ 2010"] else "Missing",
-                    #fix=lambda: webbrowser.open(VC_2010_LINK) if not vcredist_status["VC++ 2015-2022"] else None
                     fix=lambda link=VC_2010_LINK: webbrowser.open(link)
                 )
 
@@ -754,7 +759,6 @@ def main():
                     "VC++ 2015-2022",
                     vcredist_status["VC++ 2015-2022"],
                     "Installed" if vcredist_status["VC++ 2015-2022"] else "Missing",
-                    #fix=lambda: webbrowser.open(VC_2015_2022_LINK) if not vcredist_status["VC++ 2015-2022"] else None
                     fix=lambda link=VC_2015_2022_LINK: webbrowser.open(link)
                 )
 
@@ -779,13 +783,16 @@ def main():
 
     # ── After splash closes ──────────────────
 
-    # Create the show_results_window, which will stay open if any check fails 
-    # and add an exit button. Otherwise it will callback launch(), close the results 
-    # window and Retrobat will immediately launch.
+    # Callback function to launch RetroBat after closing the results window. This is only 
+    # called if all checks passed; otherwise the results window will show an "Exit" button 
+    # and this callback is not be used.
     def launch():
         rc = launch_retrobat(retrobat_exe, logger)
         sys.exit(rc)
 
+    # Create the results window, which will stay open if any check fails 
+    # and add an exit button. Otherwise it will callback launch(), close the results 
+    # window and Retrobat will immediately launch.
     show_results_window(results, launch_callback=launch)
     sys.exit()
 
