@@ -31,7 +31,6 @@ files larger than 4GB. Newer console ROMs are huge.
 
 ## Project Structure
 
----
 ├── 📁 assets
 │   ├── 📄 icon.ico
 │   └── 🖼️ icon.png
@@ -53,7 +52,6 @@ files larger than 4GB. Newer console ROMs are huge.
 ├── 🐍 launcher.py
 ├── 📄 launcher.spec
 └── 📄 version_info.txt
----
 
 **Other folders created when building or running**
 
