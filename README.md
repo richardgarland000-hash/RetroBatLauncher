@@ -31,6 +31,7 @@ files larger than 4GB. Newer console ROMs are huge.
 
 ## Project Structure
 
+retrobat_launcher/
 ```
 ├── 📁 assets
 │   ├── 📄 icon.ico
@@ -60,6 +61,7 @@ files larger than 4GB. Newer console ROMs are huge.
 ├── 📁 dist                          # Folder where compiled executable is saved
 └── 📁 logs                          # Diagnostic log store each time it runs
 ```
+
 ---
 
 ## Requirements
