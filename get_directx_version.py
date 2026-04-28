@@ -148,10 +148,10 @@ def validate_directx(min_feature_level, logger: logging.Logger):
         logger.info(f"Detected Direct3D Feature Level: {hex(level)}")
 
         if level >= min_feature_level:
-            logger.info(f"  ✓ Pass: {hex(level)} >= {hex(min_feature_level)}")
+            logger.info(f"  ✓ Pass: Direct3D {hex(level)} >= {hex(min_feature_level)}")
             return True
 
-        logger.error(f"  ✗ Fail: {hex(level)} < {hex(min_feature_level)}")
+        logger.error(f"  ✗ Fail: Direct3D {hex(level)} < {hex(min_feature_level)}")
         return False
 
     else:
@@ -162,10 +162,10 @@ def validate_directx(min_feature_level, logger: logging.Logger):
         try:
             current_ver = int(version_str.split()[-1].split('.')[0])
             if current_ver >= 11:  # assume minimum
-                logger.info("  ✓ Pass (dxdiag fallback)")
+                logger.info("  ✓ Pass: Direct3D (dxdiag fallback)")
                 return True
         except:
             pass
 
-        logger.error("  ✗ Fail: insufficient DirectX version")
+        logger.error("  ✗ Fail: insufficient Direct3D version")
         return False

@@ -287,10 +287,8 @@ class SplashScreen:
         # Create variables AFTER root exists
         self.status_var   = tk.StringVar(master=self.root, value="Initialising…")
         self.progress_var = tk.DoubleVar(master=self.root, value=0.0)
-        # self.version_text = None
-        self.version_text = "Version 2.5.1" # Update this as needed, or change value 
-                                            # to "Unknown" and read from version_info.txt
-                                            # file if you want to get fancy
+        # self.version_text = None          # Uncomment to read from version_info.txt
+        self.version_text = "Version 2.5.2" # Hard coded version text here
 
         # Center on screen
         sw = self.root.winfo_screenwidth()

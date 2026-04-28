@@ -50,10 +50,10 @@ def validate_opengl(min_major, min_minor, logger: logging.Logger):
         minor = int(parts[1]) if len(parts) > 1 else 0
 
         if major > min_major or (major == min_major and minor >= min_minor):
-            logger.info(f"  ✓ Pass: {major}.{minor} >= {min_major}.{min_minor}")
+            logger.info(f"  ✓ Pass: OpenGL {major}.{minor} >= {min_major}.{min_minor}")
             return True
 
-        logger.error(f"  ✗ Fail: {major}.{minor} < {min_major}.{min_minor}")
+        logger.error(f"  ✗ Fail: OpenGL {major}.{minor} < {min_major}.{min_minor}")
         return False
 
     except Exception as e:
