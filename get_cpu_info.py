@@ -1,3 +1,25 @@
+"""
+CPU Architecture Detection - imported by launcher.py.
+get_cpu_info.py Version: 2.5.3
+
+This module retrieves basic information about the system's processor
+architecture and the Python interpreter being used. It determines whether
+the system is running on a supported 64-bit CPU and logs the results.
+
+The module provides functions to:
+
+    • Detect the hardware CPU architecture.
+    • Determine whether the Python interpreter is 32-bit or 64-bit.
+    • Retrieve the processor identifier reported by the operating system.
+    • Validate that the system is running on a supported 64-bit
+      architecture.
+    • Log the detection results using a supplied logger.
+
+This is intended for use during application startup to verify that the
+system meets the minimum processor architecture requirements before
+launching the application.
+"""
+
 import platform
 import logging
 

@@ -1,3 +1,29 @@
+"""
+Vulkan Version Detection and Validation - imported by launcher.py.
+get_vulkan_version.py Version: 2.5.3
+
+This module detects the version of the Vulkan API supported by the current
+system by locating and querying the installed Vulkan loader. It dynamically
+loads the Vulkan runtime library and retrieves the highest supported API
+version without creating a Vulkan instance or rendering surface.
+
+The module provides functions to:
+
+    • Locate the Vulkan loader library on Windows, Linux, or macOS.
+    • Query the supported Vulkan API version using
+      vkEnumerateInstanceVersion when available.
+    • Fall back to Vulkan 1.0 detection for older loaders that do not
+      implement vkEnumerateInstanceVersion.
+    • Validate the detected Vulkan version against a required minimum
+      version.
+    • Log detection results, validation status, and errors using a supplied
+      logger.
+
+This is intended for use during application startup to verify that the
+system supports the minimum required Vulkan version before launching
+software that depends on the Vulkan graphics API.
+"""
+
 import ctypes
 from ctypes import util
 import logging

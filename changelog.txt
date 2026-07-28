@@ -7,6 +7,24 @@ and this project adheres to Semantic Versioning.
 
 ---
 
+## [2.5.3] - 2026-07-23
+
+### Changed
+- Added header comments in
+    launcher.py
+    get_cpu_info.py
+    get_directx_version.py
+    get_gpu_info.py
+    get_opengl_version.py
+    get_vcpp_redist_versions.py
+    get_vulkan_version.py
+    get_windows_info.py 
+  with functionality details and version tracking.
+- Updated README.md to clarify how to use the software executable without 
+  using the entire project package.
+
+---
+
 ## [2.5.2] - 2026-04-24
 
 ### Changed

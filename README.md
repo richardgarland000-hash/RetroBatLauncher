@@ -23,6 +23,9 @@ all validations pass or show a window with pass/fail details for each requiremen
 drive RetroBat installation with the ROMs and console BIOS easily movable between systems and checks
 the requirements.
 
+**HOW TO USE THIS SOFTWARE** The entire project files are not required to use RetroBat Launcher.
+                             [Click Here](#Deployment) for instructions.
+
 **PLEASE NOTE** If you plan on running from a portable drive, it is recommended to use an external SSD 
 (preferred) or HDD connected via USB 3.0 or higher for optimal performance, formatted as exFAT to support 
 files larger than 4GB. Newer console ROMs are huge.
@@ -117,7 +120,8 @@ C:\Games\RetroBat\
     └── RetroBatLauncher.exe ← or here
 ```
 
-The launcher walks up to four parent directories and checks the `RETROBAT_RELATIVE_CANDIDATES` list (editable in `launcher.py`).
+No other files in this project are required for use. The launcher walks up to four parent directories 
+and checks the `RETROBAT_RELATIVE_CANDIDATES` list (editable in `launcher.py`).
 
 ---
 

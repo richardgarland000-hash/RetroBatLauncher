@@ -1,3 +1,30 @@
+"""
+DirectX Version and Feature Level Detection - imported by launcher.py.
+get_directx_version.py Version: 2.5.3
+
+This module detects the highest Direct3D feature level and DirectX version
+supported by the current Windows system. It uses a multi-stage detection
+process to provide fast and reliable results:
+
+    • Checks a local cache to avoid repeated hardware detection.
+    • Uses the Direct3D 11 API to determine the supported Direct3D feature
+      level (fast and preferred method).
+    • Falls back to the Windows dxdiag utility if feature level detection
+      fails (slower but broadly compatible).
+
+The module provides functions to:
+
+    • Detect the installed Direct3D feature level or DirectX version.
+    • Cache successful detection results for faster future execution.
+    • Validate the detected version against a required minimum feature level.
+    • Log detection results, validation status, and errors using a supplied
+      logger.
+
+This is intended for use during application startup to verify that the
+system meets the minimum DirectX graphics requirements before launching
+software that depends on Direct3D.
+"""
+
 import ctypes
 import subprocess
 import os

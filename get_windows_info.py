@@ -1,3 +1,28 @@
+"""
+Windows Operating System Detection - imported by launcher.py.
+get_windows_info.py Version: 2.5.3
+
+This module retrieves information about the Windows operating system and
+validates that the system meets the minimum operating system requirements
+for an application. It gathers details about the Windows release, version,
+build number, operating system architecture, and Python interpreter
+architecture.
+
+The module provides functions to:
+
+    • Verify that the application is running on Microsoft Windows.
+    • Retrieve the Windows release, version, and build number.
+    • Detect the operating system architecture (32-bit or 64-bit).
+    • Determine whether the Python interpreter is 32-bit or 64-bit.
+    • Validate that the system is running Windows 10 or later.
+    • Validate that the operating system is 64-bit.
+    • Log validation results and return collected system information.
+
+This is intended for use during application startup to verify that the
+host system satisfies the minimum Windows operating system requirements
+before launching the application.
+"""
+
 import platform
 import sys
 import logging

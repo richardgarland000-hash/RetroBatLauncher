@@ -1,3 +1,20 @@
+"""
+OpenGL Version Detection and Validation - imported by launcher.py.
+get_opengl_version.py Version: 2.5.3
+
+This module uses GLFW to create a hidden OpenGL context so it can determine
+the version of OpenGL supported by the current graphics hardware and drivers.
+It provides functions to:
+
+    • Detect the installed OpenGL version without displaying a window.
+    • Compare the detected version against a required minimum version.
+    • Log the detection results and any errors using a supplied logger.
+
+This is intended for use during application startup to verify that the
+system meets the minimum OpneGL version graphics requirements before launching 
+an application that depends on OpenGL.
+"""
+
 import glfw
 import logging
 
@@ -59,9 +76,3 @@ def validate_opengl(min_major, min_minor, logger: logging.Logger):
     except Exception as e:
         logger.error(f"⚠ Version parsing failed: {e}")
         return False
-
-
-# Example usage
-#if __name__ == "__main__":
-#    logging.basicConfig(level=logging.INFO)
-#    validate_opengl(3, 3, logging.getLogger("GLCheck"))

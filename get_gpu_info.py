@@ -1,3 +1,28 @@
+"""
+Graphics Processing Unit (GPU) Detection - imported by launcher.py.
+get_gpu_info.py Version: 2.5.3
+
+This module retrieves the names of the graphics processing units (GPUs)
+installed in the system. It uses operating system-specific methods to
+query the graphics hardware and returns a list of detected GPU names.
+
+The module provides functions to:
+
+    • Detect installed GPU hardware on Windows, Linux, and macOS.
+    • Retrieve the display name of each detected graphics adapter.
+    • Return a fallback value if GPU detection is unsuccessful.
+
+Platform-specific detection methods include:
+
+    • Windows: Windows Management Instrumentation (WMI).
+    • Linux: The lspci command.
+    • macOS: The system_profiler utility.
+
+This is intended for use during application startup to identify the
+system's graphics hardware for logging, diagnostics, or compatibility
+verification.
+"""
+
 import platform
 import wmi
 import subprocess

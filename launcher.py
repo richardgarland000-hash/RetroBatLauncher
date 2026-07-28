@@ -1,5 +1,5 @@
 """
-RetroBat Launcher
+RetroBat Launcher Version: 2.5.3
 -----------------
 A Windows executable launcher for RetroBat that is pre-installed 
 on an external drive. Features splash screen, path detection, 
@@ -17,7 +17,19 @@ current version of the launcher. You can also implement dynamic reading from
 a file if you want to get fancy, but both executable and valid version_info.txt
 must exists in the same directory.
 
-Build with: pyinstaller & launcher.spec
+Other program dependencies when building with PyInstaller:
+get_cpu_info.py
+get_directx_version.py
+get_gpu_info.py
+get_opengl_version.py
+get_vcpp_redist_versions.py
+get_vulkan_version.py
+get_windows_info.py
+launcher.spec
+version_info.txt
+build.bat
+
+See README.md for more details on building and running the launcher.
 
 """
 
@@ -38,7 +50,7 @@ from pathlib import Path
 from datetime import datetime
 from typing import Optional
 
-# Import validation functions from external scripts
+# Import validation functions from external files
 from get_cpu_info import get_cpu_arch # get_cpu_info.py
 from get_directx_version import validate_directx # get_directx_version.py
 from get_gpu_info import get_gpu_info # get_gpu_info.py
@@ -783,7 +795,7 @@ def main():
 
     # Callback function to launch RetroBat after closing the results window. This is only 
     # called if all checks passed; otherwise the results window will show an "Exit" button 
-    # and this callback is not be used.
+    # and this callback is not used.
     def launch():
         rc = launch_retrobat(retrobat_exe, logger)
         sys.exit(rc)

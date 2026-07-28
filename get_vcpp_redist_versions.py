@@ -1,3 +1,24 @@
+"""
+Microsoft Visual C++ Redistributable Detection - imported by launcher.py.
+get_vcpp_redist_versions.py Version: 2.5.3
+
+This module scans the Windows Registry to identify installed Microsoft
+Visual C++ Redistributable packages. It searches the standard uninstall
+registry locations for both 64-bit and 32-bit applications and returns
+information about each detected redistributable.
+
+The module provides functions to:
+
+    • Search the Windows Registry for installed Microsoft Visual C++
+      Redistributables.
+    • Retrieve the display name and installed version of each package.
+    • Detect both native 64-bit and WOW6432Node (32-bit) installations.
+
+The returned information can be used to verify that the required Visual C++
+runtime libraries are installed before launching an application that
+depends on them.
+"""
+
 import winreg
 
 def get_vcredist_versions():
