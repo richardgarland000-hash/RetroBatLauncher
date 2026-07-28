@@ -1,4 +1,4 @@
-# RetroBat Launcher v2.5.2
+# RetroBat Launcher v2.5.3
 
 A Windows executable launcher for [RetroBat](https://www.retrobat.org/) with:
 
