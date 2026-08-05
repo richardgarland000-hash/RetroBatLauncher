@@ -1,5 +1,5 @@
 """
-RetroBat Launcher Version: 2.5.3
+RetroBat Launcher Version: 2.6.0
 -----------------
 A Windows executable launcher for RetroBat that is pre-installed 
 on an external drive. Features splash screen, path detection, 
@@ -44,20 +44,23 @@ import logging
 import tkinter as tk
 import re
 import webbrowser
+import uuid
+import hashlib
+import json
 
-from tkinter import messagebox
+# from tkinter import messagebox
 from pathlib import Path
 from datetime import datetime
 from typing import Optional
 
 # Import validation functions from external files
-from get_cpu_info import get_cpu_arch # get_cpu_info.py
-from get_directx_version import validate_directx # get_directx_version.py
-from get_gpu_info import get_gpu_info # get_gpu_info.py
-from get_opengl_version import validate_opengl # get_opengl_version.py
-from get_vcpp_redist_versions import get_vcredist_versions # get_vcpp_redist_versions.py
-from get_vulkan_version import validate_requirement as validate_vulkan # get_vulkan_version.py
-from get_windows_info import get_windows_info # get_windows_info.py
+from get_cpu_info import get_cpu_arch # file: get_cpu_info.py
+from get_directx_version import validate_directx # file: get_directx_version.py
+from get_gpu_info import get_gpu_info # file: get_gpu_info.py
+from get_opengl_version import validate_opengl # file: get_opengl_version.py
+from get_vcpp_redist_versions import get_vcredist_versions # file: get_vcpp_redist_versions.py
+from get_vulkan_version import validate_requirement as validate_vulkan # file: get_vulkan_version.py
+from get_windows_info import get_windows_info # file: get_windows_info.py
 
 # ─────────────────────────────────────────────
 #  Logging setup
@@ -157,6 +160,91 @@ def find_retrobat(base: Path, logger: logging.Logger) -> Optional[Path] | None:
 
     logger.error(f"  ✗ Fail: {RETROBAT_EXE_NAME} not found in any candidate locations! Please check the log for details.")
     return None
+
+# ─────────────────────────────────────────────
+#  Validation tracking file
+#
+#  Once a full validation pass completes with zero
+#  failures, we drop a small marker file next to the
+#  launcher containing a machine-specific id. On
+#  subsequent runs on the *same* machine, we detect
+#  that marker and skip straight to launching RetroBat
+#  instead of re-running the splash/validation sequence.
+# ─────────────────────────────────────────────
+
+TRACKING_FILE_NAME = ".retrobat_launcher_validated"
+
+def get_machine_id() -> str:
+    """
+    Derive a reasonably stable, unique-per-machine identifier.
+
+    Combines the MAC address (via uuid.getnode()) with the computer
+    name so the id is specific to the physical machine, not just the
+    drive the launcher happens to be plugged into.
+    """
+    node = uuid.getnode()
+    computer_name = os.environ.get("COMPUTERNAME", "")
+    raw = f"{node}-{computer_name}"
+    return hashlib.sha256(raw.encode("utf-8")).hexdigest()
+
+def get_tracking_file_path(launcher_dir: Path) -> Path:
+    """
+    Return the path to the validation tracking file, stored
+    alongside the launcher itself.
+    """
+    return launcher_dir / TRACKING_FILE_NAME
+
+def create_validation_tracking_file(launcher_dir: Path, logger: logging.Logger) -> None:
+    """
+    Write a tracking file recording this machine's id and the
+    timestamp of the successful (all-passed) validation run.
+    Called only when every validation check has passed.
+    """
+    tracking_path = get_tracking_file_path(launcher_dir)
+    payload = {
+        "machine_id": get_machine_id(),
+        "validated_at": datetime.now().isoformat(timespec="seconds"),
+    }
+
+    try:
+        with open(tracking_path, "w", encoding="utf-8") as f:
+            json.dump(payload, f)
+        logger.info(f"Validation tracking file written: {tracking_path}")
+    except Exception as e:
+        logger.warning(f"Could not write validation tracking file: {e}")
+
+def check_validation_tracking_file(launcher_dir: Path, logger: logging.Logger) -> bool:
+    """
+    Check whether a validation tracking file exists for THIS machine.
+
+    Returns True only if the tracking file exists, is readable, and
+    its recorded machine_id matches the current machine's id — i.e.
+    validation has already succeeded here before. Returns False
+    otherwise (missing file, unreadable file, or id from a different
+    machine, e.g. the drive was plugged into a different PC).
+    """
+    tracking_path = get_tracking_file_path(launcher_dir)
+
+    if not tracking_path.is_file():
+        logger.info(f"No validation tracking file found at: {tracking_path}")
+        return False
+
+    try:
+        with open(tracking_path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+    except Exception as e:
+        logger.warning(f"Validation tracking file unreadable ({e}); will re-validate.")
+        return False
+
+    stored_id = data.get("machine_id")
+    current_id = get_machine_id()
+
+    if stored_id == current_id:
+        logger.info(f"Validation tracking file matches this machine (validated_at={data.get('validated_at')}).")
+        return True
+
+    logger.info("Validation tracking file exists but belongs to a different machine; will re-validate.")
+    return False
 
 # ─────────────────────────────────────────────
 #  Results window with summary of checks.
@@ -544,6 +632,20 @@ def main():
     log_dir = launcher_dir / "logs"
     logger = setup_logging(log_dir)
 
+    # ── Fast path: skip validation if this machine already passed ──
+    # If a validation tracking file exists for this machine, we trust
+    # the earlier successful run and jump straight to launching
+    # RetroBat, bypassing the splash screen and all validation steps.
+    if check_validation_tracking_file(launcher_dir, logger):
+        exe = find_retrobat(launcher_dir, logger)
+        if exe:
+            logger.info("Validation tracking file present — skipping checks and launching RetroBat directly.")
+            rc = launch_retrobat(exe, logger)
+            sys.exit(rc)
+        else:
+            logger.warning(f"Validation tracking file present but {RETROBAT_EXE_NAME} could not be found; "
+                            f"falling back to full validation.")
+
     # ── Shared tkinter variables ─────────────
     # We create the Tk root inside SplashScreen; status & progress
     # need to be StringVar / DoubleVar bound to that root.
@@ -613,6 +715,10 @@ def main():
             # If all validation steps are done, close splash screen and 
             # show results window.
             if i >= len(steps):
+                # If every check passed, drop a tracking file so future
+                # runs on this same machine can skip validation entirely.
+                if results and all(r["passed"] for r in results):
+                    create_validation_tracking_file(launcher_dir, logger)
                 splash.close()
                 return
 

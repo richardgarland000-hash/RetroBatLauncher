@@ -7,6 +7,22 @@ and this project adheres to Semantic Versioning.
 
 ---
 
+## [2.6] - 2026-08-04
+
+### Added
+- Added validation bypass if unique identifier file exists in run 
+  directory and RetroBat executable is located, otherwise coontinue with
+  the validation and write the unique identifier file for next time.
+
+  File(s) modified:
+    launcher.py
+
+### Changed
+    README.md
+    version_info.txt
+
+---
+
 ## [2.5.3] - 2026-07-23
 
 ### Changed
