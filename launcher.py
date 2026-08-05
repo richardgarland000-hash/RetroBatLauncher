@@ -161,6 +161,48 @@ def find_retrobat(base: Path, logger: logging.Logger) -> Optional[Path] | None:
     logger.error(f"  ✗ Fail: {RETROBAT_EXE_NAME} not found in any candidate locations! Please check the log for details.")
     return None
 
+"""
+The better option of versioning is to use a version_info.txt file alongside the launcher and update version tracking 
+file with the current version. This way, if the launcher is updated, it will re-run validation on the same machine. 
+Alternatively the version variable can be hardcoded in the launcher.py file, but this is less flexible and requires 
+editing the source code for each new version.
+"""
+
+VERSION_FILE_NAME = "version_info.txt"
+LAUNCHER_VERSION = "2.6.0" # Default version, this is only if version_info.txt is missing or cannot be read.
+
+def get_version_file_path(launcher_dir: Path) -> Path:
+    """
+    Return the path to the version file, stored
+    alongside the launcher itself.
+    """
+    return launcher_dir / VERSION_FILE_NAME
+
+def get_launcher_version(launcher_dir: Path) -> str:
+    global LAUNCHER_VERSION
+    version_path = get_version_file_path(launcher_dir)
+    pattern = re.compile(r'StringStruct\("([^"]+)",\s*"([^"]+)"\)')
+        
+    def get_stringstruct_value(path, key):
+        remove_chars = '"\' )'
+        table = str.maketrans('', '', remove_chars)
+    
+        try:
+            with open(path, "r", encoding="utf-8", errors="ignore") as f:
+                remove_chars = '"\' )'
+                table = str.maketrans('', '', remove_chars)
+                for line in f:
+                    match = pattern.search(line)
+                    if match and match.group(1) == key:
+                        return match.group(2).translate(table)
+        except:
+            pass
+    
+    if version_path.exists() and not get_stringstruct_value(version_path, "ProductVersion") == "":
+        LAUNCHER_VERSION = get_stringstruct_value(version_path, "ProductVersion")
+    else:
+        pass
+
 # ─────────────────────────────────────────────
 #  Validation tracking file
 #
@@ -172,7 +214,7 @@ def find_retrobat(base: Path, logger: logging.Logger) -> Optional[Path] | None:
 #  instead of re-running the splash/validation sequence.
 # ─────────────────────────────────────────────
 
-TRACKING_FILE_NAME = ".retrobat_launcher_validated"
+TRACKING_FILE_NAME = ".retrobat_launcher_validated.json"
 
 def get_machine_id() -> str:
     """
@@ -194,57 +236,129 @@ def get_tracking_file_path(launcher_dir: Path) -> Path:
     """
     return launcher_dir / TRACKING_FILE_NAME
 
-def create_validation_tracking_file(launcher_dir: Path, logger: logging.Logger) -> None:
+def check_validation_tracking_file(launcher_dir: Path,
+                                   logger: logging.Logger) -> bool:
     """
-    Write a tracking file recording this machine's id and the
-    timestamp of the successful (all-passed) validation run.
-    Called only when every validation check has passed.
+    Returns True if this machine already exists in the tracking file.
     """
-    tracking_path = get_tracking_file_path(launcher_dir)
-    payload = {
-        "machine_id": get_machine_id(),
-        "validated_at": datetime.now().isoformat(timespec="seconds"),
-    }
 
-    try:
-        with open(tracking_path, "w", encoding="utf-8") as f:
-            json.dump(payload, f)
-        logger.info(f"Validation tracking file written: {tracking_path}")
-    except Exception as e:
-        logger.warning(f"Could not write validation tracking file: {e}")
-
-def check_validation_tracking_file(launcher_dir: Path, logger: logging.Logger) -> bool:
-    """
-    Check whether a validation tracking file exists for THIS machine.
-
-    Returns True only if the tracking file exists, is readable, and
-    its recorded machine_id matches the current machine's id — i.e.
-    validation has already succeeded here before. Returns False
-    otherwise (missing file, unreadable file, or id from a different
-    machine, e.g. the drive was plugged into a different PC).
-    """
     tracking_path = get_tracking_file_path(launcher_dir)
 
-    if not tracking_path.is_file():
-        logger.info(f"No validation tracking file found at: {tracking_path}")
+    if not tracking_path.exists():
+        logger.info("Validation tracking file does not exist, running validation.")
         return False
 
     try:
         with open(tracking_path, "r", encoding="utf-8") as f:
-            data = json.load(f)
+            records = json.load(f)
+
+        if not isinstance(records, list):
+            return False
+
     except Exception as e:
-        logger.warning(f"Validation tracking file unreadable ({e}); will re-validate.")
+        logger.warning(f"Could not read tracking file: {e}")
         return False
 
-    stored_id = data.get("machine_id")
     current_id = get_machine_id()
 
-    if stored_id == current_id:
-        logger.info(f"Validation tracking file matches this machine (validated_at={data.get('validated_at')}).")
-        return True
+    for record in records:
+        if (
+            record.get("machine_id") == current_id and
+            record.get("launcher_version") == LAUNCHER_VERSION):
+            logger.info(
+                f"Machine already validated for launcher "
+                f"{record.get('launcher_version')} "
+                f"(validated_at={record.get('validated_at')})"
+            )
+            return True
 
-    logger.info("Validation tracking file exists but belongs to a different machine; will re-validate.")
+        if (
+            record.get("machine_id") == current_id and
+            not record.get("launcher_version") == LAUNCHER_VERSION):
+            logger.info(
+                f"Validation exists for version "
+                f"{record.get('launcher_version')} "
+                f"but current launcher is {LAUNCHER_VERSION}; "
+                f"running validation again."
+            )
+            return False
+
+    logger.info("Current machine not found in validation file, running validation.")
     return False
+
+def update_validation_tracking_file(launcher_dir: Path,
+                                    logger: logging.Logger) -> None:
+    """
+    Create the tracking file if it doesn't exist.
+    Append this machine if it is not already present.
+    Update the launcher version and timestamp if it is already present.
+    """
+
+    tracking_path = get_tracking_file_path(launcher_dir)
+    current_id = get_machine_id()
+    file_created = not tracking_path.exists()
+    records = []
+    
+    if tracking_path.exists():
+        try:
+            with open(tracking_path, "r", encoding="utf-8") as f:
+                records = json.load(f)
+
+            if not isinstance(records, list):
+                records = []
+        except Exception:
+            records = []
+
+    # Already recorded in the file?
+    if any(r.get("machine_id") == current_id for r in records):
+        logger.info("Machine already exists in validation tracking file.")
+
+    now = datetime.now().isoformat(timespec="seconds")
+
+    # Find an existing machine record
+    for record in records:
+        if record.get("machine_id") == current_id:
+
+            # Already validated for this launcher version
+            if record.get("launcher_version") == LAUNCHER_VERSION:
+                logger.info(
+                    f"Machine already validated for launcher "
+                    f"{LAUNCHER_VERSION}."
+                    f" (validated_at={record.get('validated_at')})"
+                )
+                return
+
+            # Existing machine, new launcher version:
+            # update the existing record instead of appending.
+            logger.info(
+                f"Updating validation record from "
+                f"{record.get('launcher_version')} "
+                f"to {LAUNCHER_VERSION}."
+            )
+
+            record["launcher_version"] = LAUNCHER_VERSION
+            record["validated_at"] = now
+            break
+
+    else:
+        # Machine not found -> create new record
+        records.append({
+            "machine_id": current_id,
+            "launcher_version": LAUNCHER_VERSION,
+            "validated_at": now
+        })
+
+    try:
+        with open(tracking_path, "w", encoding="utf-8") as f:
+            json.dump(records, f, indent=4)
+
+        if file_created:
+            logger.info(f"Created validation tracking file: {tracking_path}")
+        else:
+            logger.info("Validation passed, updated tracking file.")
+
+    except Exception as e:
+        logger.warning(f"Could not update validation tracking file: {e}")
 
 # ─────────────────────────────────────────────
 #  Results window with summary of checks.
@@ -387,8 +501,7 @@ class SplashScreen:
         # Create variables AFTER root exists
         self.status_var   = tk.StringVar(master=self.root, value="Initialising…")
         self.progress_var = tk.DoubleVar(master=self.root, value=0.0)
-        # self.version_text = None          # Uncomment to read from version_info.txt
-        self.version_text = "Version 2.5.2" # Hard coded version text here
+        self.version_text = f"Version {LAUNCHER_VERSION}"
 
         # Center on screen
         sw = self.root.winfo_screenwidth()
@@ -632,6 +745,8 @@ def main():
     log_dir = launcher_dir / "logs"
     logger = setup_logging(log_dir)
 
+    get_launcher_version(launcher_dir)  # Update global LAUNCHER_VERSION from version_info.txt
+
     # ── Fast path: skip validation if this machine already passed ──
     # If a validation tracking file exists for this machine, we trust
     # the earlier successful run and jump straight to launching
@@ -718,7 +833,7 @@ def main():
                 # If every check passed, drop a tracking file so future
                 # runs on this same machine can skip validation entirely.
                 if results and all(r["passed"] for r in results):
-                    create_validation_tracking_file(launcher_dir, logger)
+                    update_validation_tracking_file(launcher_dir, logger)
                 splash.close()
                 return
 

@@ -10,7 +10,7 @@ A Windows executable launcher for [RetroBat](https://www.retrobat.org/) with:
 
 Tested with RetroBat-v8.0.1-stable-win64.
 
-**REQUIREMENTS**
+**REQUIREMENTS:**
 - Windows 10 or newer (64-bit) (Can run on 8.1 but who has that these days)
 - 64-bit CPU
 - Direct3D 11.1 / OpenGL 4.4 / Vulkan 1.2 compatible GPU 
@@ -23,12 +23,16 @@ all validations pass or show a window with pass/fail details for each requiremen
 drive RetroBat installation with the ROMs and console BIOS easily movable between systems and checks
 the requirements.
 
-**HOW TO USE THIS SOFTWARE** All the project files are not required to use RetroBat Launcher.
-                             [Click Here](#Deployment) for instructions.
+**HOW TO USE THIS SOFTWARE:** 
+All the project files are not required to use RetroBat Launcher. [Click Here](#Deployment) for instructions.
 
-**PLEASE NOTE** If you plan on running from a portable drive, it is recommended to use an external SSD 
+**PLEASE NOTE:** If you plan on running from a portable drive, it is recommended to use an external SSD 
 (preferred) or HDD connected via USB 3.0 or higher for optimal performance, formatted as exFAT to support 
 files larger than 4GB. Newer console ROMs are huge.
+
+**WHAT'S NEW:**
+Added a feature to track individual machines the validation has been run on and passed with a JSON file,
+saved in the folder location containing the RetroBat Launcher executable.
 
 ---
 
