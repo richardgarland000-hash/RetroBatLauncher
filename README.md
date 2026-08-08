@@ -1,4 +1,4 @@
-# RetroBat Launcher v2.6.5.0
+# RetroBat Launcher v2.6.5.1
 
 A Windows executable launcher for [RetroBat](https://www.retrobat.org/) with:
 
@@ -15,13 +15,15 @@ Tested with RetroBat-v8.1.2-stable-win64.
 - 64-bit CPU
 - Direct3D 11.1 / OpenGL 4.4 / Vulkan 1.2 compatible GPU 
 - Visual C++ 2005-2019 Redistributable Packages
+- Dokan 2.3.1000 or newer
+- WinFSP 2.1.25156 or newer
 - Base installation of RetroBat only includes ROMs that are not copyrighted, you must add these yourself
 
 **RECOMMENDED CPU, NOT VALIDATED BUT LOGGED:**
-• SSE2 support
-• 3 GHz clock frequency
-• Dual Core or higher
-• Manufactured 2008 or newer
+- SSE2 support
+- 3 GHz clock frequency
+- Dual Core or higher
+- Manufactured 2008 or newer
 
 Retrobat runs in a standalone folder natively, but the system must meet minimum requirements. This
 program was created to validate the requirements and run RetroBat automatically from any drive/folder if 

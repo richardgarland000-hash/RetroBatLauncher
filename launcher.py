@@ -1,5 +1,5 @@
 """
-RetroBat Launcher Version: 2.6.5
+RetroBat Launcher Version: 2.6.5.1
 -----------------
 A Windows executable launcher for RetroBat that is pre-installed 
 on an external drive. Features splash screen, path detection, 
@@ -11,6 +11,8 @@ Tested with RetroBat-v8.1.2-stable-win64, requirements validated:
 • 64-bit CPU
 • Direct3D 11.1 / OpenGL 4.4 / Vulkan 1.2 compatible GPU 
 • Visual C++ 2005-2022 Redistributable Packages
+• Dokan 2.3.1000 or newer
+• WinFSP 2.1.25156 or newer
 
 RetroBat recommended hardware (not validated but logged):
 
@@ -58,10 +60,12 @@ import webbrowser
 import uuid
 import hashlib
 import json
+#import packaging
 
 from pathlib import Path
 from datetime import datetime
 from typing import Optional
+from packaging.version import Version
 
 # Import validation functions from external files
 from get_cpu_info import get_cpu_arch # file: get_cpu_info.py
@@ -71,6 +75,7 @@ from get_opengl_version import validate_opengl # file: get_opengl_version.py
 from get_vcpp_redist_versions import get_vcredist_versions # file: get_vcpp_redist_versions.py
 from get_vulkan_version import validate_requirement as validate_vulkan # file: get_vulkan_version.py
 from get_windows_info import get_windows_info # file: get_windows_info.py
+from get_app_list import get_installed_programs # file: get_app_list.py
 
 import multiprocessing
 import glfw
@@ -450,7 +455,7 @@ def show_results_window(results, launch_callback=None):
             if not r["passed"] and r.get("fix"):
                 btn = tk.Button(
                     row,
-                    text="Fix",
+                    text="Download",
                     command=r["fix"],
                     bg="#ff6b35"#,
                     #fg="white"
@@ -807,6 +812,7 @@ def main():
     retrobat_exe = None
     link = None
     results = []
+    download_prefix = "http://retrobat.ovh/repo/win64/prerequisites/"
 
     """
     Adds the results of each validation step to the results array, which 
@@ -831,11 +837,12 @@ def main():
             (0.15, "Checking CPU Architecture…"),       # step 2
             (0.20, "Checking GPU Info…"),               # step 3
             (0.25, "Getting OS Info…"),                 # step 4
-            (0.30, "Get DirectX Version…"),             # step 5
-            (0.55, "Get OpenGL Version…"),              # step 6
-            (0.80, "Get Vulkan Version…"),              # step 7
-            (0.90, "Get VCPP Version…"),                # step 8
-            (1.00, "Ready to start RetroBat…"),         # step 9
+            (0.30, "Checking DirectX Version…"),        # step 5
+            (0.50, "Checking OpenGL Version…"),         # step 6
+            (0.70, "Checking Vulkan Version…"),         # step 7
+            (0.80, "Checking VCPP Version…"),           # step 8
+            (0.90, "Checking App Dependencies…"),       # step 9
+            (1.00, "Ready to start RetroBat…"),         # step 10
         ]
 
         # Function for looping through sequential validation steps.
@@ -960,6 +967,7 @@ def main():
             # Step 8: Check Visual C++ Redistributable for 2005-2022 installations.
             elif i == 8:
                 def check_vcredist_detailed():
+                    nonlocal download_prefix
                     """
                     Check for required Microsoft Visual C++ Redistributables.
 
@@ -972,51 +980,51 @@ def main():
                     required = {
                         "2005 Redistributable": {
                             "installed": False,
-                            "url": "https://www.microsoft.com/download/details.aspx?id=26347",
+                            "url": f"{download_prefix}vcredist2005_x86.zip",
                         },
                         "2005 Redistributable (x64)": {
                             "installed": False,
-                            "url": "https://www.microsoft.com/download/details.aspx?id=18471",
+                            "url": f"{download_prefix}vcredist2005_x64.zip",
                         },
                         "2008 Redistributable - x64": {
                             "installed": False,
-                            "url": "https://download.microsoft.com/download/5/D/8/5D8C65CB-C849-4025-8E95-C3966CAFD8AE/vcredist_x64.exe",
+                            "url": f"{download_prefix}vcredist2008_x64.zip",
                         },
                         "2008 Redistributable - x86": {
                             "installed": False,
-                            "url": "https://download.microsoft.com/download/5/D/8/5D8C65CB-C849-4025-8E95-C3966CAFD8AE/vcredist_x86.exe",
+                            "url": f"{download_prefix}vcredist2008_x86.zip",
                         },
                         "2010  x64 Redistributable": {
                             "installed": False,
-                            "url": "https://download.microsoft.com/download/1/6/5/165255E7-1014-4D0A-B094-B6A430A6BFFC/vcredist_x64.exe",
+                            "url": f"{download_prefix}vcredist2010_x64.zip",
                         },
                         "2010  x86 Redistributable": {
                             "installed": False,
-                            "url": "https://download.microsoft.com/download/1/6/5/165255E7-1014-4D0A-B094-B6A430A6BFFC/vcredist_x86.exe",
+                            "url": f"{download_prefix}vcredist2010_x86.zip",
                         },
                         "2012 Redistributable (x64)": {
                             "installed": False,
-                            "url": "https://download.microsoft.com/download/1/1/8/118E35D4-58E3-4A1D-8A6C-4FC2E3A675D5/VSU4/vcredist_x64.exe",
+                            "url": f"{download_prefix}vcredist2012_x64.zip",
                         },
                         "2012 Redistributable (x86)": {
                             "installed": False,
-                            "url": "https://download.microsoft.com/download/1/1/8/118E35D4-58E3-4A1D-8A6C-4FC2E3A675D5/VSU4/vcredist_x86.exe",
+                            "url": f"{download_prefix}vcredist2012_x86.zip",
                         },
                         "2013 Redistributable (x64)": {
                             "installed": False,
-                            "url": "https://download.microsoft.com/download/9/3/F/93F6F5A2-D3C2-4E3A-9A4F-0302E36D7D5F/vcredist_x64.exe",
+                            "url": f"{download_prefix}vcredist2013_x64.zip",
                         },
                         "2013 Redistributable (x86)": {
                             "installed": False,
-                            "url": "https://download.microsoft.com/download/9/3/F/93F6F5A2-D3C2-4E3A-9A4F-0302E36D7D5F/vcredist_x86.exe",
+                            "url": f"{download_prefix}vcredist2013_x86.zip",
                         },
                         "2015-2022 Redistributable (x86)": {
                             "installed": False,
-                            "url": "https://aka.ms/vc14/vc_redist.x86.exe",
+                            "url": f"{download_prefix}vcredist2015_2017_2019_2022_x86.zip",
                         },
                         "v14 Redistributable (x64)": {
                             "installed": False,
-                            "url": "https://aka.ms/vc14/vc_redist.x64.exe",
+                            "url": f"{download_prefix}vcredist2015_2017_2019_2022_x64.zip",
                         },
                     }
 
@@ -1071,6 +1079,78 @@ def main():
                         logger.info(f"  ✓ Pass: {name} installed")
                     else:
                         logger.error(f"  ✗ Fail: {name} missing")
+
+            # Step 9: Check app dependencies.
+            elif i == 9:
+                """
+                Flexible function for checking if required applications are installed 
+                and meet minimum version requirements. Add/remove apps in the `required` 
+                dictionary as needed. Each app has:
+                    • installed: boolean (updated after check)
+                    • version: minimum required version string
+                    • url: download link for the app if missing or outdated
+                """
+                nonlocal download_prefix
+
+                def get_installed_version(installed_apps, program_name):
+                    """Return the installed version of an application, or None if not found."""
+
+                    for app in installed_apps:
+                        if program_name.lower() in app["name"].lower():
+                            return app["version"]
+
+                    return None
+
+                required = {
+                    "Dokan": {
+                        "installed": False,
+                        "version": "2.3.1.1000",
+                        "url": f"{download_prefix}DokanSetup.zip",
+                    },
+                    "WinFSP": {
+                        "installed": False,
+                        "version": "2.1.25156",
+                        "url": f"{download_prefix}winfsp.zip",
+                    },
+                }
+
+                installed_apps = get_installed_programs()
+
+                for program_name, program_info in required.items():
+
+                    installed_version = get_installed_version(
+                        installed_apps,
+                        program_name
+                    )
+
+                    program_info["installed"] = (
+                        installed_version is not None
+                        and installed_version != "Unknown"
+                        and Version(installed_version) >= Version(program_info["version"])
+                    )
+
+                    status = (
+                        f"Installed ({installed_version})"
+                        if program_info["installed"]
+                        else "Missing/Outdated"
+                    )
+
+                    add_result(
+                        program_name,
+                        program_info["installed"],
+                        status,
+                        fix=lambda url=program_info["url"]: webbrowser.open(url)
+                    )
+
+                    if program_info["installed"]:
+                        logger.info(f"  ✓ Pass: {program_name} {installed_version}")
+                    else:
+                        logger.error(
+                            f"  ✗ Fail: {program_name} "
+                            f"(required {program_info['version']})"
+                        )
+
+            # Step 10: Validation complete.
 
             """
             Increment the do_step integer to proceed to the next step with a delay between 

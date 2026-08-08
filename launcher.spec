@@ -27,6 +27,7 @@ import xml.etree.ElementTree
 from ctypes import util
 from datetime import datetime
 from OpenGL.GL import glGetString, GL_VERSION, GL_RENDERER, GL_VENDOR
+from packaging.version import Version
 from pathlib import Path
 from PyInstaller.utils.hooks import collect_dynamic_libs, collect_submodules
 from typing import Optional

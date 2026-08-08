@@ -2,3 +2,4 @@ py-cpuinfo
 glfw
 psutil
 WMI
+packaging

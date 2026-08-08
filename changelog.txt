@@ -7,6 +7,21 @@ and this project adheres to Semantic Versioning.
 
 ---
 
+## [2.6.5.1] - 2026-08-08
+
+### Added
+
+- Added missing checks for Dokan and WinFSP applications
+- File(s) modified:
+  launcher.py
+  launcher.spec
+  README.md
+  version_info.txt
+- File(s) added:
+  get_app_list.py
+
+---
+
 ## [2.6.5] - 2026-08-07
 
 ### Changed
