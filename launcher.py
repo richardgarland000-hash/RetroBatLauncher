@@ -30,6 +30,7 @@ must exists in the same directory it is run from.
 
 Other program dependencies when building with PyInstaller:
 • build.bat
+• get_app_list.py
 • get_cpu_info.py
 • get_directx_version.py
 • get_gpu_info.py
