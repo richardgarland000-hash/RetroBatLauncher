@@ -3,5 +3,4 @@ logs/
 testing/
 __pycache__/
 dx_cache.json
-.retrobat_launcher_validated
 .retrobat_launcher_validated.json

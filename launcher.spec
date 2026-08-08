@@ -2,47 +2,55 @@
 # Build with:  pyinstaller launcher.spec
 # Requires:    pip install pyinstaller
 
+import datetime
+import ctypes
+import glfw
+import hashlib
+import json
+import logging
+import os
+import pathlib
+import platform
+import re
 import sys
-from pathlib import Path
-from typing import Optional
-from OpenGL.GL import glGetString, GL_VERSION, GL_RENDERER, GL_VENDOR
+import subprocess
+import tempfile
+import threading
+import time
+import tkinter
+import uuid
+import webbrowser
+import winreg
+import wmi
+import xml.etree.ElementTree
+
 from ctypes import util
-from PyInstaller.utils.hooks import collect_dynamic_libs
+from datetime import datetime
+from OpenGL.GL import glGetString, GL_VERSION, GL_RENDERER, GL_VENDOR
+from pathlib import Path
+from PyInstaller.utils.hooks import collect_dynamic_libs, collect_submodules
+from typing import Optional
 
 block_cipher = None
+
+all_binaries = []
+all_binaries.extend(collect_dynamic_libs('psutil'))
+all_binaries.extend(collect_dynamic_libs('glfw'))
+
+all_hiddenimports = ['cpuinfo']
+all_hiddenimports.extend(collect_submodules('psutil'))
+all_hiddenimports.extend(collect_submodules('glfw'))
 
 a = Analysis(
     ["launcher.py"],
     pathex=[str(Path(".").resolve())],
-    binaries=collect_dynamic_libs('glfw'),
+    #binaries=collect_dynamic_libs('glfw'),
+    binaries=all_binaries,
     datas=[
         # Include an icon if present; remove the tuple if you have none
         # ("assets/icon.ico", "assets"),
     ],
-    hiddenimports=[
-        "tkinter",
-        "tkinter.messagebox",
-        "logging",
-        "subprocess",
-        "threading",
-        "pathlib",
-        "datetime",
-        "sys",
-        "os",
-        "time",
-        "re",
-        "winreg",
-        "datetime"
-        "platform",
-        "xml.etree.ElementTree",
-        "tempfile",
-        "wmi",
-        "glfw",
-        "winreg",
-        "ctypes",
-        "json",
-        "datetimeplatform",
-    ],
+    hiddenimports=all_hiddenimports,
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],

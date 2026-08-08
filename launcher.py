@@ -1,34 +1,45 @@
 """
-RetroBat Launcher Version: 2.6.0
+RetroBat Launcher Version: 2.6.5
 -----------------
 A Windows executable launcher for RetroBat that is pre-installed 
 on an external drive. Features splash screen, path detection, 
 dependency checks, and debug logging.
 
-RetroBat requirements (all validated):
+Tested with RetroBat-v8.1.2-stable-win64, requirements validated:
 
-- Windows 10 or newer (64-bit) (Can run on 8.1 but who has that these days)
-- 64-bit CPU
-- Direct3D 11.1 / OpenGL 4.4 / Vulkan 1.2 compatible GPU 
-- Visual C++ 2010/2015-2019 Redistributable Packages
+• Windows 10 or newer (64-bit) (Can run on 8.1 but who has that these days)
+• 64-bit CPU
+• Direct3D 11.1 / OpenGL 4.4 / Vulkan 1.2 compatible GPU 
+• Visual C++ 2005-2022 Redistributable Packages
 
-Be sure to update self.version_text in SplashScreen.__init__  to display the
-current version of the launcher. You can also implement dynamic reading from
+RetroBat recommended hardware (not validated but logged):
+
+CPU with:
+• SSE2 support
+• 3 GHz clock frequency
+• Dual Core or higher
+• Manufactured 2008 or newer
+
+Be sure to update LAUNCHER_VERSION and RELEASE_DATE under "# UPDATE THESE VARIABLES 
+WHEN YOU RELEASE A NEW VERSION OF THE LAUNCHER!" to display the current version 
+and release date of the launcher. You can also implement dynamic reading from
 a file if you want to get fancy, but both executable and valid version_info.txt
-must exists in the same directory.
+must exists in the same directory it is run from.
 
 Other program dependencies when building with PyInstaller:
-get_cpu_info.py
-get_directx_version.py
-get_gpu_info.py
-get_opengl_version.py
-get_vcpp_redist_versions.py
-get_vulkan_version.py
-get_windows_info.py
-launcher.spec
-version_info.txt
-build.bat
+• build.bat
+• get_cpu_info.py
+• get_directx_version.py
+• get_gpu_info.py
+• get_opengl_version.py
+• get_vcpp_redist_versions.py
+• get_vulkan_version.py
+• get_windows_info.py
+• launcher.spec
+• rbl-requirements.txt
+• version_info.txt
 
+This launcher also uses third-party libraries: py-cpuinfo, glfw, psutil, WMI.
 See README.md for more details on building and running the launcher.
 
 """
@@ -48,7 +59,6 @@ import uuid
 import hashlib
 import json
 
-# from tkinter import messagebox
 from pathlib import Path
 from datetime import datetime
 from typing import Optional
@@ -61,6 +71,9 @@ from get_opengl_version import validate_opengl # file: get_opengl_version.py
 from get_vcpp_redist_versions import get_vcredist_versions # file: get_vcpp_redist_versions.py
 from get_vulkan_version import validate_requirement as validate_vulkan # file: get_vulkan_version.py
 from get_windows_info import get_windows_info # file: get_windows_info.py
+
+import multiprocessing
+import glfw
 
 # ─────────────────────────────────────────────
 #  Logging setup
@@ -97,9 +110,9 @@ def setup_logging(log_dir: Path) -> logging.Logger:
     logger.info("RetroBat Launcher started")
     logger.info("=" * 60)
     logger.info(f"Log file: {log_file}")
-    logger.info(f"Python: {sys.version}")
-    logger.info(f"Platform: {sys.platform}")
-    logger.info(f"Executable: {sys.executable}")
+    logger.debug(f"Python: {sys.version}")
+    logger.debug(f"Platform: {sys.platform}")
+    logger.debug(f"Executable: {sys.executable}")
     return logger
 
 # ─────────────────────────────────────────────
@@ -158,18 +171,27 @@ def find_retrobat(base: Path, logger: logging.Logger) -> Optional[Path] | None:
             break
         current = parent
 
-    logger.error(f"  ✗ Fail: {RETROBAT_EXE_NAME} not found in any candidate locations! Please check the log for details.")
+    logger.error(f"  ✗ Fail: {RETROBAT_EXE_NAME} not found in any candidate " 
+                 f"locations! Please check the log for details.")
     return None
 
+# ─────────────────────────────────────────────
+#  Version variable assignment from external 
+#  file first, then hard coded value second.
+# ─────────────────────────────────────────────
+
 """
-The better option of versioning is to use a version_info.txt file alongside the launcher and update version tracking 
-file with the current version. This way, if the launcher is updated, it will re-run validation on the same machine. 
-Alternatively the version variable can be hardcoded in the launcher.py file, but this is less flexible and requires 
-editing the source code for each new version.
+The better option of versioning is to use a version_info.txt file alongside the 
+launcher and update version tracking file with the current version. This way, if 
+the launcher is updated, it will re-run validation on the same machine. 
+Alternatively the version variable can be hardcoded in the launcher.py file, but 
+this is less flexible and requires editing the source code for each new version.
 """
 
+# UPDATE THESE VARIABLES WHEN YOU RELEASE A NEW VERSION OF THE LAUNCHER!
 VERSION_FILE_NAME = "version_info.txt"
-LAUNCHER_VERSION = "2.6.0" # Default version, this is only if version_info.txt is missing or cannot be read.
+LAUNCHER_VERSION = "2.6.5.0" # Default version only if file is missing or unreadable.
+RELEASE_DATE = "2026-08-07" # Default release date only if file is missing or unreadable.
 
 def get_version_file_path(launcher_dir: Path) -> Path:
     """
@@ -178,8 +200,10 @@ def get_version_file_path(launcher_dir: Path) -> Path:
     """
     return launcher_dir / VERSION_FILE_NAME
 
-def get_launcher_version(launcher_dir: Path) -> str:
+def get_launcher_version(launcher_dir: Path,
+                         logger: logging.Logger) -> str:
     global LAUNCHER_VERSION
+    global RELEASE_DATE
     version_path = get_version_file_path(launcher_dir)
     pattern = re.compile(r'StringStruct\("([^"]+)",\s*"([^"]+)"\)')
         
@@ -200,19 +224,25 @@ def get_launcher_version(launcher_dir: Path) -> str:
     
     if version_path.exists() and not get_stringstruct_value(version_path, "ProductVersion") == "":
         LAUNCHER_VERSION = get_stringstruct_value(version_path, "ProductVersion")
+        RELEASE_DATE = get_stringstruct_value(version_path, "ReleaseDate")
+        logger.info(f"Version file {version_path} found, using ProductVersion {LAUNCHER_VERSION} "
+                    f"and ReleaseDate {RELEASE_DATE} from file.")
     else:
+        logger.info(f"Version file {version_path} does not exist, using internal version " 
+                    f"{LAUNCHER_VERSION} and release date {RELEASE_DATE}.")
         pass
 
 # ─────────────────────────────────────────────
 #  Validation tracking file
-#
-#  Once a full validation pass completes with zero
-#  failures, we drop a small marker file next to the
-#  launcher containing a machine-specific id. On
-#  subsequent runs on the *same* machine, we detect
-#  that marker and skip straight to launching RetroBat
-#  instead of re-running the splash/validation sequence.
 # ─────────────────────────────────────────────
+
+"""
+Once a full validation pass completes with zero failures, we drop a 
+small marker file next to the launcher containing a machine-specific
+id. On subsequent runs on the *same* machine, we detect that marker
+and skip straight to launching RetroBat instead of re-running the 
+splash/validation sequence.
+"""
 
 TRACKING_FILE_NAME = ".retrobat_launcher_validated.json"
 
@@ -245,8 +275,10 @@ def check_validation_tracking_file(launcher_dir: Path,
     tracking_path = get_tracking_file_path(launcher_dir)
 
     if not tracking_path.exists():
-        logger.info("Validation tracking file does not exist, running validation.")
+        logger.info(f"Validation tracking file {tracking_path} does not exist, running validation.")
         return False
+    else:
+        logger.info(f"Validation tracking file exists: {tracking_path}")
 
     try:
         with open(tracking_path, "r", encoding="utf-8") as f:
@@ -256,14 +288,14 @@ def check_validation_tracking_file(launcher_dir: Path,
             return False
 
     except Exception as e:
-        logger.warning(f"Could not read tracking file: {e}")
+        logger.warning(f"Could not read tracking file {tracking_path}: {e}")
         return False
 
     current_id = get_machine_id()
 
     for record in records:
-        if (
-            record.get("machine_id") == current_id and
+        # Found matching machine id and matching launcher version -> skip validation
+        if (record.get("machine_id") == current_id and
             record.get("launcher_version") == LAUNCHER_VERSION):
             logger.info(
                 f"Machine already validated for launcher "
@@ -271,9 +303,8 @@ def check_validation_tracking_file(launcher_dir: Path,
                 f"(validated_at={record.get('validated_at')})"
             )
             return True
-
-        if (
-            record.get("machine_id") == current_id and
+        # Found matching machine id but different launcher version -> re-run validation
+        if (record.get("machine_id") == current_id and
             not record.get("launcher_version") == LAUNCHER_VERSION):
             logger.info(
                 f"Validation exists for version "
@@ -283,22 +314,27 @@ def check_validation_tracking_file(launcher_dir: Path,
             )
             return False
 
+    # Unknown machine id -> run validation
     logger.info("Current machine not found in validation file, running validation.")
     return False
 
 def update_validation_tracking_file(launcher_dir: Path,
                                     logger: logging.Logger) -> None:
     """
-    Create the tracking file if it doesn't exist.
-    Append this machine if it is not already present.
-    Update the launcher version and timestamp if it is already present.
+    • Create the tracking file if it doesn't exist.
+    • Append this machine if it is not already present.
+    • Update the launcher version and timestamp if it is already present.
     """
 
     tracking_path = get_tracking_file_path(launcher_dir)
     current_id = get_machine_id()
+
+    # If the tracking file doesn't exist, we'll create it and add the current machine.
     file_created = not tracking_path.exists()
+
     records = []
     
+    # Load existing records if the file exists, otherwise start with an empty list.
     if tracking_path.exists():
         try:
             with open(tracking_path, "r", encoding="utf-8") as f:
@@ -309,7 +345,7 @@ def update_validation_tracking_file(launcher_dir: Path,
         except Exception:
             records = []
 
-    # Already recorded in the file?
+    # Existing record in the file?
     if any(r.get("machine_id") == current_id for r in records):
         logger.info("Machine already exists in validation tracking file.")
 
@@ -405,10 +441,12 @@ def show_results_window(results, launch_callback=None):
             )
             label.pack(side="left", fill="x", expand=True)
 
-            # Display "Fix" button if validation failed and the fix 
-            # variable is set (a function that opens the relevant URL)
-            # See do_step() in loading_sequence() for where add_result() 
-            # is called with fix functions.
+            """
+            Display "Fix" button if validation failed and the fix 
+            variable is set (a function that opens the relevant URL)
+            See do_step() in loading_sequence() for where add_result() 
+            is called with fix functions.
+            """
             if not r["passed"] and r.get("fix"):
                 btn = tk.Button(
                     row,
@@ -423,10 +461,12 @@ def show_results_window(results, launch_callback=None):
         bottom = tk.Frame(root, pady=10)
         bottom.pack()
 
-        # If no issues, just launch RetroBat and close the results 
-        # window; otherwise display "Exit" button, which only closes 
-        # the results window, so the user can see the results list 
-        # and relevant fix buttons (download links).
+        """
+        If no issues, just launch RetroBat and close the results 
+        window; otherwise display "Exit" button, which only closes 
+        the results window, so the user can see the results list 
+        and relevant fix buttons (download links).
+        """
         if all_passed and launch_callback:
             launch_callback()
             root.destroy()
@@ -458,12 +498,12 @@ def collect_environment_info(logger: logging.Logger) -> dict:
         "program_files_x86": os.environ.get("ProgramFiles(x86)", "N/A"),
         "path_entries": os.environ.get("PATH", "").split(os.pathsep),
     }
-    logger.info("Current Environment:")
+    logger.debug("Current Environment:")
     for k, v in info.items():
         if k == "path_entries":
-            logger.info(f"  PATH has {len(v)} entries")
+            logger.debug(f"  PATH has {len(v)} entries")
         else:
-            logger.info(f"  {k}: {v}")
+            logger.debug(f"  {k}: {v}")
     return info
 
 # ─────────────────────────────────────────────
@@ -502,6 +542,7 @@ class SplashScreen:
         self.status_var   = tk.StringVar(master=self.root, value="Initialising…")
         self.progress_var = tk.DoubleVar(master=self.root, value=0.0)
         self.version_text = f"Version {LAUNCHER_VERSION}"
+        self.release_date_text = f"{RELEASE_DATE}"
 
         # Center on screen
         sw = self.root.winfo_screenwidth()
@@ -510,12 +551,15 @@ class SplashScreen:
         y = (sh - self.H) // 2
         self.root.geometry(f"{self.W}x{self.H}+{x}+{y}")
 
-        self._build_ui(self.status_var, self.progress_var, self.version_text)
+        self._build_ui(self.status_var, 
+                       self.progress_var, 
+                       self.version_text, 
+                       self.release_date_text)
         self._animate_scan(0)
 
     # ── UI construction ──────────────────────
 
-    def _build_ui(self, status_var, progress_var, version_text):
+    def _build_ui(self, status_var, progress_var, version_text, release_date_text):
         c = tk.Canvas(
             self.root, width=self.W, height=self.H,
             bg=self.BG, highlightthickness=0,
@@ -566,34 +610,17 @@ class SplashScreen:
             fill=self.BAR_FG, outline="",
         )
 
-        # If self.version_text has no assigned value above, use version from 
-        # ProductVersion value in version_info.txt, otherwise fallback to "Unknown"
-        if version_text == "":
-            pattern = re.compile(r'StringStruct\("([^"]+)",\s*"([^"]+)"\)')
-
-            def get_stringstruct_value(file_path, key):
-                remove_chars = '"\' )'
-                table = str.maketrans('', '', remove_chars)
-
-                try:
-                    with open(file_path, "r", encoding="utf-8", errors="ignore") as f:
-                        for line in f:
-                            match = pattern.search(line)
-                            if match and match.group(1) == key:
-                                return match.group(2).translate(table)
-                except:
-                    pass
-
-                return "Unknown"
-            
-            if not get_stringstruct_value("version_info.txt", "ProductVersion") == "":
-                version_text = f"Version {get_stringstruct_value("version_info.txt", "ProductVersion")}"
-            else:
-                version_text = "Version Unknown"
+        """
+        LAUNCHER_VERSION and RELEASE_DATE are set in get_launcher_version(), which is called 
+        prior to this point and should already be assigned to display the version on the 
+        splash screen.
+        """
+        version_text = f"Version {LAUNCHER_VERSION}" if LAUNCHER_VERSION else "Version Unknown"
+        release_date_text = f"{RELEASE_DATE}" if RELEASE_DATE else "Release Date Unknown"
 
         c.create_text(self.W//2, 240,
                       #text=f"v1.2  ·  {datetime.now():%Y-%m-%d}",
-                      text=f"{version_text}  ·  {datetime.now():%Y-%m-%d}",
+                      text=f"{version_text}  ·  {release_date_text}",
                       fill=self.DIM, font=("Courier New", 8))
 
         # Scanline overlay placeholder id (updated by animation)
@@ -606,18 +633,14 @@ class SplashScreen:
         self._buttons = []
 
     def _update_bar(self, pct: float):
-        """
-        Redraw progress bar to reflect 0–100 percent.
-        """
+        # Redraw progress bar to reflect 0–100 percent.
         pct = max(0.0, min(1.0, pct))
         x1 = 40
         x2 = 40 + int((self.W - 80) * pct)
         self._canvas.coords(self._bar_rect, x1, 178, x2, 194)
 
     def _animate_scan(self, y: int):
-        """
-        Draw a moving scanline for retro atmosphere.
-        """
+        # Draw a moving scanline for retro atmosphere.
         c = self._canvas
         if self._scan_id:
             c.delete(self._scan_id)
@@ -629,9 +652,7 @@ class SplashScreen:
         self._after_id = self.root.after(40, self._animate_scan, next_y)
 
     def add_button(self, text, command, x, y, width=120, height=28):
-        """
-        Add a button to the splash screen. Returns the button instance.
-        """
+        # Add a button to the splash screen. Returns the button instance.
         btn = tk.Button(
             self.root,
             text=text,
@@ -647,9 +668,7 @@ class SplashScreen:
         return btn
     
     def clear_buttons(self):
-        """
-        Removes all buttons from the splash screen.
-        """
+        # Removes all buttons from the splash screen.
         for b in self._buttons:
             try:
                 b.destroy()
@@ -670,19 +689,6 @@ class SplashScreen:
             except Exception:
                 pass
             self.root = None
-
-# ─────────────────────────────────────────────
-#  Download link URLs for missing dependencies.
-# ─────────────────────────────────────────────
-
-# Direct link for Visual C++ 2010 SP1 (x64)
-VC_2010_LINK = "https://www.microsoft.com/en-us/download/details.aspx?id=26999"
-    
-# Permanent link for the latest Visual C++ 2015-2022 (x64)
-VC_2015_2022_LINK = "https://aka.ms/vc14/vc_redist.x64.exe"
-
-# DirectX End-User Runtime Web Installer
-DX_LINK = "https://www.microsoft.com/en-us/download/details.aspx?id=35"
 
 # ─────────────────────────────────────────────
 #  RetroBat launch logic
@@ -719,8 +725,8 @@ def launch_retrobat(exe: Path, logger: logging.Logger) -> int:
     try:
         proc = subprocess.Popen(
         [str(exe)],
-            cwd=str(cwd),   # ← still D:\RetroBat, where retrobat.exe lives
-            env=env,        # ← but with HOME and related vars pointing to \RetroBat\emulationstation
+            cwd=str(cwd),   # ← still where retrobat.exe lives but with HOME and related
+            env=env,        # ← vars pointing to emulationstation directory
             shell=False,
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL,
@@ -745,32 +751,42 @@ def main():
     log_dir = launcher_dir / "logs"
     logger = setup_logging(log_dir)
 
-    get_launcher_version(launcher_dir)  # Update global LAUNCHER_VERSION from version_info.txt
+    # ── Assigns global LAUNCHER_VERSION from
+    #    version_info.txt or hard coded value.
+    get_launcher_version(launcher_dir, logger)
 
     # ── Fast path: skip validation if this machine already passed ──
-    # If a validation tracking file exists for this machine, we trust
-    # the earlier successful run and jump straight to launching
-    # RetroBat, bypassing the splash screen and all validation steps.
+    """
+    If a validation tracking file exists for this machine, we trust
+    the earlier successful run and jump straight to launching
+    RetroBat, bypassing the splash screen and all validation steps.
+    """
     if check_validation_tracking_file(launcher_dir, logger):
         exe = find_retrobat(launcher_dir, logger)
         if exe:
-            logger.info("Validation tracking file present — skipping checks and launching RetroBat directly.")
+            logger.info("Validation tracking file present — skipping checks " 
+                        "and launching RetroBat directly.")
             rc = launch_retrobat(exe, logger)
             sys.exit(rc)
         else:
-            logger.warning(f"Validation tracking file present but {RETROBAT_EXE_NAME} could not be found; "
-                            f"falling back to full validation.")
+            logger.warning(f"Validation tracking file present but " 
+                           f"{RETROBAT_EXE_NAME} could not be found; "
+                           f"falling back to full validation.")
 
     # ── Shared tkinter variables ─────────────
-    # We create the Tk root inside SplashScreen; status & progress
-    # need to be StringVar / DoubleVar bound to that root.
+    """
+    We create the Tk root inside SplashScreen; status & progress
+    need to be StringVar / DoubleVar bound to that root.
+    """
     status_var   = None
     progress_var = None
     version_text = None
 
     # ── Create splash ────────────────────────
-    # We need the Tk instance first to make StringVar / DoubleVar
-    # Trick: create them after SplashScreen.__init__ builds root.
+    """
+    We need the Tk instance first to make StringVar / DoubleVar
+    Trick: create them after SplashScreen.__init__ builds root.
+    """
     splash = None
 
     def run_with_splash():
@@ -792,8 +808,11 @@ def main():
     link = None
     results = []
 
-    # Adds the results of each validation step to the results array, which will be 
-    # evaluated and displayed in the results window after the splash screen closes.
+    """
+    Adds the results of each validation step to the results array, which 
+    will be evaluated and displayed in the results window after the splash 
+    screen closes.
+    """
     def add_result(name, passed, message, fix=None):
         results.append({
             "name": name,
@@ -803,9 +822,7 @@ def main():
         })
 
     def loading_sequence():
-        """
-        Define the sequential loading steps with status updates and progress increments.
-        """
+        # Define the sequential loading steps with status updates and progress increments.
         nonlocal retrobat_exe
 
         steps = [
@@ -821,9 +838,7 @@ def main():
             (1.00, "Ready to start RetroBat…"),         # step 9
         ]
 
-        """
-        Function for looping through sequential validation steps.
-        """
+        # Function for looping through sequential validation steps.
         def do_step(i):
             nonlocal retrobat_exe, link
 
@@ -863,7 +878,7 @@ def main():
                 cpu = get_cpu_arch(logger) # returns array of strings
 
                 for key, value in cpu.items():
-                    logger.info(f"{key}: {value}")
+                    logger.debug(f"{key}: {value}")
                 cpu_is_64bit = cpu.get("Hardware Arch") in ['AMD64', 'x86_64']
 
                 add_result(
@@ -884,7 +899,7 @@ def main():
                 win_info = get_windows_info(logger)
 
                 for key, value in win_info.items():
-                    logger.info(f"{key}: {value}")
+                    logger.debug(f"{key}: {value}")
 
                 os_release = str(win_info.get("OS Release", "")).strip()
                 arch = str(win_info.get("OS Architecture", "")).strip()
@@ -909,6 +924,7 @@ def main():
                 # level check fails)
                 min_feature_level = 11 # "0xb000"
                 dx_ok = validate_directx(min_feature_level, logger) # returns boolean
+                DX_LINK = "https://www.microsoft.com/en-us/download/details.aspx?id=35"
 
                 add_result(
                     "DirectX Version",
@@ -941,62 +957,120 @@ def main():
                     fix=None  # No 'Fix' button will appear for this failure
                 )
 
-            # Step 8: Check Visual C++ Redistributable for 2010/2015-2019 installations.
+            # Step 8: Check Visual C++ Redistributable for 2005-2022 installations.
             elif i == 8:
                 def check_vcredist_detailed():
+                    """
+                    Check for required Microsoft Visual C++ Redistributables.
+
+                    Returns:
+                        dict: Redistributable status information including:
+                            • installed status
+                            • download URL
+                    """
+
                     required = {
-                        "VC++ 2010": False,
-                        "VC++ 2015-2022": False
+                        "2005 Redistributable": {
+                            "installed": False,
+                            "url": "https://www.microsoft.com/download/details.aspx?id=26347",
+                        },
+                        "2005 Redistributable (x64)": {
+                            "installed": False,
+                            "url": "https://www.microsoft.com/download/details.aspx?id=18471",
+                        },
+                        "2008 Redistributable - x64": {
+                            "installed": False,
+                            "url": "https://download.microsoft.com/download/5/D/8/5D8C65CB-C849-4025-8E95-C3966CAFD8AE/vcredist_x64.exe",
+                        },
+                        "2008 Redistributable - x86": {
+                            "installed": False,
+                            "url": "https://download.microsoft.com/download/5/D/8/5D8C65CB-C849-4025-8E95-C3966CAFD8AE/vcredist_x86.exe",
+                        },
+                        "2010  x64 Redistributable": {
+                            "installed": False,
+                            "url": "https://download.microsoft.com/download/1/6/5/165255E7-1014-4D0A-B094-B6A430A6BFFC/vcredist_x64.exe",
+                        },
+                        "2010  x86 Redistributable": {
+                            "installed": False,
+                            "url": "https://download.microsoft.com/download/1/6/5/165255E7-1014-4D0A-B094-B6A430A6BFFC/vcredist_x86.exe",
+                        },
+                        "2012 Redistributable (x64)": {
+                            "installed": False,
+                            "url": "https://download.microsoft.com/download/1/1/8/118E35D4-58E3-4A1D-8A6C-4FC2E3A675D5/VSU4/vcredist_x64.exe",
+                        },
+                        "2012 Redistributable (x86)": {
+                            "installed": False,
+                            "url": "https://download.microsoft.com/download/1/1/8/118E35D4-58E3-4A1D-8A6C-4FC2E3A675D5/VSU4/vcredist_x86.exe",
+                        },
+                        "2013 Redistributable (x64)": {
+                            "installed": False,
+                            "url": "https://download.microsoft.com/download/9/3/F/93F6F5A2-D3C2-4E3A-9A4F-0302E36D7D5F/vcredist_x64.exe",
+                        },
+                        "2013 Redistributable (x86)": {
+                            "installed": False,
+                            "url": "https://download.microsoft.com/download/9/3/F/93F6F5A2-D3C2-4E3A-9A4F-0302E36D7D5F/vcredist_x86.exe",
+                        },
+                        "2015-2022 Redistributable (x86)": {
+                            "installed": False,
+                            "url": "https://aka.ms/vc14/vc_redist.x86.exe",
+                        },
+                        "v14 Redistributable (x64)": {
+                            "installed": False,
+                            "url": "https://aka.ms/vc14/vc_redist.x64.exe",
+                        },
                     }
 
                     try:
-                        redists = get_vcredist_versions() # returns array of dicts for valid redistributables
+                        redists = get_vcredist_versions() # from get_vcpp_redist_version.py
 
-                        # Log the list of detected Visual C++ Redistributables for troubleshooting.
-                        logger.info(f"{'Installed Redistributable':<60} | {'Version'}")
-                        logger.info("-" * 80)
-                        for r in sorted(redists, key=lambda x: x['Name']):
-                            logger.info(f"{r['Name']:<60} | {r['Version']}")
+                        # Log detected redistributables
+                        logger.debug(f"{'Installed Redistributable':<70} | {'Version'}")
+                        logger.debug("-" * 85)
 
+                        for r in sorted(redists, key=lambda x: x["Name"]):
+                            logger.debug(f"{r['Name']:<70} | {r['Version']}")
+
+                        # Compare detected versions against required versions
                         for r in redists:
-                            name = r.get("Name", "")
+                            detected_name = r.get("Name", "")
 
-                            if "2010" in name:
-                                required["VC++ 2010"] = True
+                            # Sort required redistributables by name length (longest first) 
+                            # to avoid partial matches
+                            for required_name, info in sorted(
+                                required.items(),
+                                key=lambda x: len(x[0]),
+                                reverse=True
+                            ):
+                                if required_name in detected_name:
+                                    info["installed"] = True
+                                    break
 
-                            if "2015-2022" in name:
-                                required["VC++ 2015-2022"] = True
-
-                    except Exception:
+                    except Exception as e:
+                        logger.error(f"Error checking Visual C++ Redistributables: {e}")
                         pass
 
                     return required
                 
-                vcredist_status = check_vcredist_detailed() # returns dict of required redistributables
+                vcredist_status = check_vcredist_detailed()
 
-                add_result(
-                    "VC++ 2010",
-                    vcredist_status["VC++ 2010"],
-                    "Installed" if vcredist_status["VC++ 2010"] else "Missing",
-                    fix=lambda link=VC_2010_LINK: webbrowser.open(link)
-                )
+                """
+                Create a list of results for each required redistributable, including a 
+                "Fix" button that opens the download URL if it's missing. Also log the 
+                results to the console for troubleshooting.
+                """
+                for name, info in vcredist_status.items():
 
-                if vcredist_status["VC++ 2010"]:
-                    logger.info("  ✓ Pass: VC++ 2010 installed")
-                else:
-                    logger.error("  ✗ Fail: VC++ 2010 missing")
+                    add_result(
+                            name,
+                            info["installed"],
+                            "Installed" if info["installed"] else "Missing",
+                            fix=lambda url=info["url"]: webbrowser.open(url)
+                        )
 
-                add_result(
-                    "VC++ 2015-2022",
-                    vcredist_status["VC++ 2015-2022"],
-                    "Installed" if vcredist_status["VC++ 2015-2022"] else "Missing",
-                    fix=lambda link=VC_2015_2022_LINK: webbrowser.open(link)
-                )
-
-                if vcredist_status["VC++ 2015-2022"]:
-                    logger.info("  ✓ Pass: VC++ 2015-2022 installed")
-                else:
-                    logger.error("  ✗ Fail: VC++ 2015-2022 missing")
+                    if info["installed"]:
+                        logger.info(f"  ✓ Pass: {name} installed")
+                    else:
+                        logger.error(f"  ✗ Fail: {name} missing")
 
             """
             Increment the do_step integer to proceed to the next step with a delay between 
@@ -1004,28 +1078,33 @@ def main():
             """
             splash.root.after(350, do_step, i + 1)
 
-        """
-        Start the loading sequence with the first step.
-        """
-        do_step(0) # Start with the first step (index 0)
+        # Start the loading sequence with the first step. (index 0)
+        do_step(0)
 
     # Run splash on main thread
     run_with_splash()
 
     # ── After splash closes ──────────────────
 
-    # Callback function to launch RetroBat after closing the results window. This is only 
-    # called if all checks passed; otherwise the results window will show an "Exit" button 
-    # and this callback is not used.
+    """
+    Launch function to start RetroBat after closing the results window. This is only 
+    called if all checks passed; otherwise the results window will show an "Exit" button 
+    and this callback is not used.
+    """
     def launch():
         rc = launch_retrobat(retrobat_exe, logger)
         sys.exit(rc)
 
-    # Create the results window, which will stay open if any check fails 
-    # and add an exit button. Otherwise it will callback launch(), close the results 
-    # window and Retrobat will immediately launch.
+    """
+    Create the results window if any validations failed, which will stay open if any check
+    fails and add an exit button and closing will not start RetroBat. Otherwise it will 
+    callback launch(), close the results window and RetroBat will immediately launch.
+    """
     show_results_window(results, launch_callback=launch)
     sys.exit()
 
 if __name__ == "__main__":
+    multiprocessing.freeze_support()
+    if not glfw.init():
+        raise RuntimeError("Could not initialize GLFW")
     main()

@@ -1,0 +1,4 @@
+py-cpuinfo
+glfw
+psutil
+WMI

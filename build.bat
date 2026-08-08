@@ -44,6 +44,7 @@ echo.
 echo  Running PyInstaller…
 echo.
 python -m PyInstaller launcher.spec --clean --noconfirm
+:: python -m PyInstaller --clean --collect-all psutil --collect-all glfw --hidden-import="cpuinfo" main.py
 
 if errorlevel 1 (
     echo.

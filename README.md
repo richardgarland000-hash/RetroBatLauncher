@@ -1,4 +1,4 @@
-# RetroBat Launcher v2.6
+# RetroBat Launcher v2.6.5.0
 
 A Windows executable launcher for [RetroBat](https://www.retrobat.org/) with:
 
@@ -8,14 +8,20 @@ A Windows executable launcher for [RetroBat](https://www.retrobat.org/) with:
 - 📋 **Debug logging** — timestamped log files saved to a `logs/` folder next to the .exe
 - ⚠️ **Error dialog** — friendly popup if RetroBat can't be found or requirements are not met
 
-Tested with RetroBat-v8.0.1-stable-win64.
+Tested with RetroBat-v8.1.2-stable-win64.
 
 **REQUIREMENTS:**
 - Windows 10 or newer (64-bit) (Can run on 8.1 but who has that these days)
 - 64-bit CPU
 - Direct3D 11.1 / OpenGL 4.4 / Vulkan 1.2 compatible GPU 
-- Visual C++ 2010/2015-2019 Redistributable Packages
+- Visual C++ 2005-2019 Redistributable Packages
 - Base installation of RetroBat only includes ROMs that are not copyrighted, you must add these yourself
+
+**RECOMMENDED CPU, NOT VALIDATED BUT LOGGED:**
+• SSE2 support
+• 3 GHz clock frequency
+• Dual Core or higher
+• Manufactured 2008 or newer
 
 Retrobat runs in a standalone folder natively, but the system must meet minimum requirements. This
 program was created to validate the requirements and run RetroBat automatically from any drive/folder if 
@@ -31,15 +37,14 @@ All the project files are not required to use RetroBat Launcher. [Click Here](#D
 files larger than 4GB. Newer console ROMs are huge.
 
 **WHAT'S NEW:**
-Added a feature to track individual machines the validation has been run on and passed with a JSON file,
-saved in the folder location containing the RetroBat Launcher executable.
+See the changelog.txt file for feature history.
 
 ---
 
 ## Project Structure
 
-retrobat_launcher/
 ```
+📁 retrobat_launcher/
 ├── 📁 assets
 │   ├── 📄 icon.ico
 │   └── 🖼️ icon.png
@@ -66,12 +71,13 @@ retrobat_launcher/
 
 ├── 📁 build                         # Scratch folder for builds
 ├── 📁 dist                          # Folder where compiled executable is saved
+│   └── ⚙️ RetroBatLauncher.exe      # Build output executable
 └── 📁 logs                          # Diagnostic log store each time it runs
 ```
 
 ---
 
-## Requirements
+## Requirements for compiling
 
 | Tool | Version |
 |------|---------|
@@ -85,6 +91,12 @@ retrobat_launcher/
 
 ### Option A — double-click
 
+Run the following as a batch library install prior to building.
+
+```powershell
+python -m pip install -r rbl-requirements.txt
+```
+
 Run **`build.bat`**. It will:
 1. Check for Python and PyInstaller (installs if missing)
 2. Clean old build artefacts
@@ -94,6 +106,7 @@ Run **`build.bat`**. It will:
 
 ```powershell
 pip install pyinstaller
+python -m pip install -r rbl-requirements.txt
 python -m PyInstaller launcher.spec --clean --noconfirm
 ```
 
@@ -107,21 +120,21 @@ Place `RetroBatLauncher.exe` in **any** of these positions relative to your Retr
 
 ```
 # Same folder as retrobat.exe
-C:\Games\RetroBat\
-├── retrobat.exe
-└── RetroBatLauncher.exe     ← here
+📁 C:\Games\RetroBat\
+├── ⚙️ retrobat.exe
+└── ⚙️ RetroBatLauncher.exe     ← here
 
 # One level above
-C:\Games\
-├── RetroBat\
-│   └── retrobat.exe
-└── RetroBatLauncher.exe     ← or here
+📁 C:\Games\
+├── 📁 RetroBat\
+│   └── ⚙️ retrobat.exe
+└──  ⚙️ RetroBatLauncher.exe     ← or here
 
 # Subfolder alongside
-C:\Games\RetroBat\
-├── retrobat.exe
-└── Launcher\
-    └── RetroBatLauncher.exe ← or here
+📁 C:\Games\RetroBat\
+├── ⚙️ retrobat.exe
+└── 📁 Launcher\
+   └── ⚙️ RetroBatLauncher.exe ← or here
 ```
 
 No other files in this project are required for use. The launcher walks up to four parent directories 
