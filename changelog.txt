@@ -26,7 +26,7 @@ and this project adheres to Semantic Versioning.
 
 ### Changed
 
-- Updated requirement validations for RetroBat version 8.1.2-stable-win64.
+- Updated requirement validations for RetroBat version 8.2.0-stable-win64.
 - Expanded logging information for troubleshooting purposes.
 - Revised launcher version and release date display in splash window.
 - File(s) modified:

@@ -5,7 +5,7 @@ A Windows executable launcher for RetroBat that is pre-installed
 on an external drive. Features splash screen, path detection, 
 dependency checks, and debug logging.
 
-Tested with RetroBat-v8.1.2-stable-win64, requirements validated:
+Tested with RetroBat-v8.2.0-stable-win64, requirements validated:
 
 • Windows 10 or newer (64-bit) (Can run on 8.1 but who has that these days)
 • 64-bit CPU
