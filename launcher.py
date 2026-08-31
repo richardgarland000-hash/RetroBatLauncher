@@ -22,11 +22,11 @@ CPU with:
 • Dual Core or higher
 • Manufactured 2008 or newer
 
-Be sure to update LAUNCHER_VERSION and RELEASE_DATE under "# UPDATE THESE VARIABLES 
-WHEN YOU RELEASE A NEW VERSION OF THE LAUNCHER!" to display the current version 
-and release date of the launcher. You can also implement dynamic reading from
-a file if you want to get fancy, but both executable and valid version_info.txt
-must exists in the same directory it is run from.
+Be sure to update variables in "#  Global Variables" as needed. The primary 
+purpose of valid version_info.txt is for the app build. You can also implement 
+dynamic reading from the valid version_info.txt file for the app version and 
+relase date, but both executable and valid version_info.txt must exists in 
+the same directory it is run from.
 
 Other program dependencies when building with PyInstaller:
 • build.bat
@@ -80,6 +80,20 @@ from get_app_list import get_installed_programs # file: get_app_list.py
 
 import multiprocessing
 import glfw
+
+# ─────────────────────────────────────────────
+#  Global Variables
+# ─────────────────────────────────────────────
+
+RETROBAT_EXE_NAME = "retrobat.exe"
+VERSION_FILE_NAME = "version_info.txt"
+TRACKING_FILE_NAME = ".retrobat_launcher_validated.json"
+# The prefix applies to the URL when downloads are from the RetroBat site, update as needed
+DOWNLOAD_PREFIX = "http://retrobat.ovh/repo/win64/prerequisites/"
+# UPDATE THESE VARIABLES WHEN YOU REBUILD A NEW VERSION OF THE LAUNCHER!
+LAUNCHER_VERSION = "2.6.5.1" # Default version only if file is missing or unreadable.
+RELEASE_DATE = "2026-08-07" # Default release date only if file is missing or unreadable.
+
 
 # ─────────────────────────────────────────────
 #  Logging setup
@@ -138,8 +152,6 @@ RETROBAT_RELATIVE_CANDIDATES = [
     "../../RetroBat",
 ]
 
-RETROBAT_EXE_NAME = "retrobat.exe"
-
 def get_launcher_dir() -> Path:
     """
     Return the directory that contains the launcher itself.
@@ -194,11 +206,6 @@ Alternatively the version variable can be hardcoded in the launcher.py file, but
 this is less flexible and requires editing the source code for each new version.
 """
 
-# UPDATE THESE VARIABLES WHEN YOU RELEASE A NEW VERSION OF THE LAUNCHER!
-VERSION_FILE_NAME = "version_info.txt"
-LAUNCHER_VERSION = "2.6.5.0" # Default version only if file is missing or unreadable.
-RELEASE_DATE = "2026-08-07" # Default release date only if file is missing or unreadable.
-
 def get_version_file_path(launcher_dir: Path) -> Path:
     """
     Return the path to the version file, stored
@@ -249,8 +256,6 @@ id. On subsequent runs on the *same* machine, we detect that marker
 and skip straight to launching RetroBat instead of re-running the 
 splash/validation sequence.
 """
-
-TRACKING_FILE_NAME = ".retrobat_launcher_validated.json"
 
 def get_machine_id() -> str:
     """
@@ -813,7 +818,9 @@ def main():
     retrobat_exe = None
     link = None
     results = []
-    download_prefix = "http://retrobat.ovh/repo/win64/prerequisites/"
+    # The prefix applies to the URL when downloads are from the RetroBat site
+    # Update as needed
+    #DOWNLOAD_PREFIX = "http://retrobat.ovh/repo/win64/prerequisites/"
 
     """
     Adds the results of each validation step to the results array, which 
@@ -932,7 +939,8 @@ def main():
                 # level check fails)
                 min_feature_level = 11 # "0xb000"
                 dx_ok = validate_directx(min_feature_level, logger) # returns boolean
-                DX_LINK = "https://www.microsoft.com/en-us/download/details.aspx?id=35"
+                #DX_LINK = "https://www.microsoft.com/en-us/download/details.aspx?id=35"
+                DX_LINK = f"{DOWNLOAD_PREFIX}directx_Jun2010_redist.zip"
 
                 add_result(
                     "DirectX Version",
@@ -968,7 +976,7 @@ def main():
             # Step 8: Check Visual C++ Redistributable for 2005-2022 installations.
             elif i == 8:
                 def check_vcredist_detailed():
-                    nonlocal download_prefix
+                    #nonlocal DOWNLOAD_PREFIX - relocated to global variables definitions
                     """
                     Check for required Microsoft Visual C++ Redistributables.
 
@@ -981,51 +989,51 @@ def main():
                     required = {
                         "2005 Redistributable": {
                             "installed": False,
-                            "url": f"{download_prefix}vcredist2005_x86.zip",
+                            "url": f"{DOWNLOAD_PREFIX}vcredist2005_x86.zip",
                         },
                         "2005 Redistributable (x64)": {
                             "installed": False,
-                            "url": f"{download_prefix}vcredist2005_x64.zip",
+                            "url": f"{DOWNLOAD_PREFIX}vcredist2005_x64.zip",
                         },
                         "2008 Redistributable - x64": {
                             "installed": False,
-                            "url": f"{download_prefix}vcredist2008_x64.zip",
+                            "url": f"{DOWNLOAD_PREFIX}vcredist2008_x64.zip",
                         },
                         "2008 Redistributable - x86": {
                             "installed": False,
-                            "url": f"{download_prefix}vcredist2008_x86.zip",
+                            "url": f"{DOWNLOAD_PREFIX}vcredist2008_x86.zip",
                         },
                         "2010  x64 Redistributable": {
                             "installed": False,
-                            "url": f"{download_prefix}vcredist2010_x64.zip",
+                            "url": f"{DOWNLOAD_PREFIX}vcredist2010_x64.zip",
                         },
                         "2010  x86 Redistributable": {
                             "installed": False,
-                            "url": f"{download_prefix}vcredist2010_x86.zip",
+                            "url": f"{DOWNLOAD_PREFIX}vcredist2010_x86.zip",
                         },
                         "2012 Redistributable (x64)": {
                             "installed": False,
-                            "url": f"{download_prefix}vcredist2012_x64.zip",
+                            "url": f"{DOWNLOAD_PREFIX}vcredist2012_x64.zip",
                         },
                         "2012 Redistributable (x86)": {
                             "installed": False,
-                            "url": f"{download_prefix}vcredist2012_x86.zip",
+                            "url": f"{DOWNLOAD_PREFIX}vcredist2012_x86.zip",
                         },
                         "2013 Redistributable (x64)": {
                             "installed": False,
-                            "url": f"{download_prefix}vcredist2013_x64.zip",
+                            "url": f"{DOWNLOAD_PREFIX}vcredist2013_x64.zip",
                         },
                         "2013 Redistributable (x86)": {
                             "installed": False,
-                            "url": f"{download_prefix}vcredist2013_x86.zip",
+                            "url": f"{DOWNLOAD_PREFIX}vcredist2013_x86.zip",
                         },
                         "2015-2022 Redistributable (x86)": {
                             "installed": False,
-                            "url": f"{download_prefix}vcredist2015_2017_2019_2022_x86.zip",
+                            "url": f"{DOWNLOAD_PREFIX}vcredist2015_2017_2019_2022_x86.zip",
                         },
                         "v14 Redistributable (x64)": {
                             "installed": False,
-                            "url": f"{download_prefix}vcredist2015_2017_2019_2022_x64.zip",
+                            "url": f"{DOWNLOAD_PREFIX}vcredist2015_2017_2019_2022_x64.zip",
                         },
                     }
 
@@ -1091,7 +1099,7 @@ def main():
                     • version: minimum required version string
                     • url: download link for the app if missing or outdated
                 """
-                nonlocal download_prefix
+                #nonlocal DOWNLOAD_PREFIX - relocated to global variables definitions
 
                 def get_installed_version(installed_apps, program_name):
                     """Return the installed version of an application, or None if not found."""
@@ -1106,12 +1114,12 @@ def main():
                     "Dokan": {
                         "installed": False,
                         "version": "2.3.1.1000",
-                        "url": f"{download_prefix}DokanSetup.zip",
+                        "url": f"{DOWNLOAD_PREFIX}DokanSetup.zip",
                     },
                     "WinFSP": {
                         "installed": False,
                         "version": "2.1.25156",
-                        "url": f"{download_prefix}winfsp.zip",
+                        "url": f"{DOWNLOAD_PREFIX}winfsp.zip",
                     },
                 }
 
