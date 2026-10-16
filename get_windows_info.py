@@ -37,7 +37,6 @@ def get_windows_info(logger: logging.Logger):
     # 2. Get OS Version Details
     # platform.win32_ver() returns (release, version, csd, ptype)
     release, version, csd, ptype = platform.win32_ver()
-    #logger.debug(f"platform.win32_ver() returned: release={release}, version={version}, csd={csd}, ptype={ptype}")
     info['OS Release'] = release  # e.g., "10" or "11"
     info['OS Version'] = version  # e.g., "10.0.22631"
 

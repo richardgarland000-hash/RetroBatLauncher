@@ -1,11 +1,11 @@
 """
-RetroBat Launcher Version: 2.6.5.1
+RetroBat Launcher Version: 2.6.5.2
 -----------------
 A Windows executable launcher for RetroBat that is pre-installed 
 on an external drive. Features splash screen, path detection, 
 dependency checks, and debug logging.
 
-Tested with RetroBat-v8.2.0-stable-win64, requirements validated:
+Tested with RetroBat-v8.3.0-stable-win64, requirements validated:
 
 • Windows 10 or newer (64-bit) (Can run on 8.1 but who has that these days)
 • 64-bit CPU
@@ -91,8 +91,8 @@ TRACKING_FILE_NAME = ".retrobat_launcher_validated.json"
 # The prefix applies to the URL when downloads are from the RetroBat site, update as needed
 DOWNLOAD_PREFIX = "http://retrobat.ovh/repo/win64/prerequisites/"
 # UPDATE THESE VARIABLES WHEN YOU REBUILD A NEW VERSION OF THE LAUNCHER!
-LAUNCHER_VERSION = "2.6.5.1" # Default version only if file is missing or unreadable.
-RELEASE_DATE = "2026-08-07" # Default release date only if file is missing or unreadable.
+LAUNCHER_VERSION = "2.6.5.2" # Default version only if file is missing or unreadable.
+RELEASE_DATE = "2026-10-16" # Default release date only if file is missing or unreadable.
 
 
 # ─────────────────────────────────────────────
@@ -630,7 +630,6 @@ class SplashScreen:
         release_date_text = f"{RELEASE_DATE}" if RELEASE_DATE else "Release Date Unknown"
 
         c.create_text(self.W//2, 240,
-                      #text=f"v1.2  ·  {datetime.now():%Y-%m-%d}",
                       text=f"{version_text}  ·  {release_date_text}",
                       fill=self.DIM, font=("Courier New", 8))
 
@@ -818,9 +817,6 @@ def main():
     retrobat_exe = None
     link = None
     results = []
-    # The prefix applies to the URL when downloads are from the RetroBat site
-    # Update as needed
-    #DOWNLOAD_PREFIX = "http://retrobat.ovh/repo/win64/prerequisites/"
 
     """
     Adds the results of each validation step to the results array, which 
@@ -1099,7 +1095,6 @@ def main():
                     • version: minimum required version string
                     • url: download link for the app if missing or outdated
                 """
-                #nonlocal DOWNLOAD_PREFIX - relocated to global variables definitions
 
                 def get_installed_version(installed_apps, program_name):
                     """Return the installed version of an application, or None if not found."""

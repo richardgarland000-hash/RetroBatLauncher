@@ -20,13 +20,13 @@ VSVersionInfo(
         [
           StringStruct("CompanyName",      "Richard Garland"),
           StringStruct("FileDescription",  "RetroBat Launcher"),
-          StringStruct("FileVersion",      "2.6.5.1"),
+          StringStruct("FileVersion",      "2.6.5.2"),
           StringStruct("InternalName",     "RetroBatLauncher"),
           StringStruct("LegalCopyright",   "© 2026 Richard Garland"),
           StringStruct("OriginalFilename", "RetroBatLauncher.exe"),
           StringStruct("ProductName",      "RetroBat Launcher"),
-          StringStruct("ProductVersion",   "2.6.5.1"),
-          StringStruct("ReleaseDate",      "2026-08-08"),
+          StringStruct("ProductVersion",   "2.6.5.2"),
+          StringStruct("ReleaseDate",      "2026-10-16"),
         ]
       )
     ]),

@@ -1,4 +1,4 @@
-# RetroBat Launcher v2.6.5.1
+# RetroBat Launcher v2.6.5.2
 
 A Windows executable launcher for [RetroBat](https://www.retrobat.org/) with:
 
@@ -8,7 +8,7 @@ A Windows executable launcher for [RetroBat](https://www.retrobat.org/) with:
 - 📋 **Debug logging** — timestamped log files saved to a `logs/` folder next to the .exe
 - ⚠️ **Error dialog** — friendly popup if RetroBat can't be found or requirements are not met
 
-Tested with RetroBat-v8.2.0-stable-win64.
+Tested with RetroBat-v8.3.0-stable-win64.
 
 **REQUIREMENTS:**
 - Windows 10 or newer (64-bit) (Can run on 8.1 but who has that these days)

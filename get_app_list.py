@@ -1,6 +1,6 @@
 """
 Installed Applications Detection - imported by launcher.py.
-get_cpu_info.py Version: 2.6.5.1
+get_cpu_info.py Version: 2.6.5
 
 Get installed Windows applications and their versions
     from the Windows Uninstall registry keys.

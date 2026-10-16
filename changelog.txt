@@ -7,6 +7,21 @@ and this project adheres to Semantic Versioning.
 
 ---
 
+## [2.6.5.2] - 2026-10-16
+
+### Changed
+
+- Tested launcher with RetroBat-v8.3.0-stable-win64 
+- File(s) modified:
+  launcher.py
+  README.md
+  version_info.txt
+- File(s) cleanup:
+  get_app_list.py
+  get_windows_info.py
+
+---
+
 ## [2.6.5.1] - 2026-08-08
 
 ### Added
@@ -22,7 +37,7 @@ and this project adheres to Semantic Versioning.
 
 ---
 
-## [2.6.5] - 2026-08-07
+## [2.6.5] - 2026-10-16
 
 ### Changed
 
